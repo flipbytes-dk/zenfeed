@@ -22,7 +22,16 @@ export const users = new Map<string, UserData>();
 // Rate limiting store for resend attempts
 export const resendAttempts = new Map<string, { count: number; lastAttempt: Date }>();
 
+// Session store for user authentication
+export const sessions = new Map<string, {
+  userId: string;
+  email: string;
+  expires: Date;
+  createdAt: Date;
+}>();
+
 // Constants
 export const MAX_RESEND_ATTEMPTS = 3;
 export const RESEND_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-export const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours 
+export const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+export const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours 
