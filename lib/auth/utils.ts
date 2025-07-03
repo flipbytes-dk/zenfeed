@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { sessions } from '@/lib/stores/verification-store';
 
 export interface AuthSession {
@@ -97,10 +98,9 @@ export function cleanupExpiredSessions(): number {
 
 /**
  * Check if a user needs to complete onboarding
- * @param userId - The user's ID or email
  * @returns Promise<boolean> - true if onboarding is needed
  */
-export async function checkOnboardingStatus(userId: string): Promise<{ needsOnboarding: boolean; error?: string }> {
+export async function checkOnboardingStatus(): Promise<{ needsOnboarding: boolean; error?: string }> {
   try {
     const response = await fetch('/api/auth/onboarding', {
       method: 'GET',
@@ -126,9 +126,9 @@ export async function checkOnboardingStatus(userId: string): Promise<{ needsOnbo
  * @param router - Next.js router instance
  * @param redirectTo - Optional redirect URL
  */
-export async function handlePostAuthRedirect(router: any, redirectTo?: string) {
+export async function handlePostAuthRedirect(router: AppRouterInstance, redirectTo?: string) {
   try {
-    const { needsOnboarding, error } = await checkOnboardingStatus('current');
+    const { needsOnboarding, error } = await checkOnboardingStatus();
     
     if (error) {
       console.warn('Onboarding check failed, redirecting to dashboard:', error);

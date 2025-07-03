@@ -153,7 +153,7 @@ const InterestsStep = ({
           What interests you?
         </h2>
         <p className="text-lg text-gray-600">
-          Select 3-10 topics you'd like to see in your curated content sessions.
+          Select 3-15 topics you'd like to see in your curated content sessions.
         </p>
         <p className="text-sm text-gray-500">
           Selected: {selectedInterests.length} interests
@@ -177,6 +177,16 @@ const InterestsStep = ({
           <div
             key={category.id}
             onClick={() => toggleInterest(category.id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleInterest(category.id);
+              }
+            }}
+            role="checkbox"
+            aria-checked={isSelected(category.id)}
+            aria-label={`${category.name}: ${category.description}`}
+            tabIndex={0}
             className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 hover:shadow-md ${
               isSelected(category.id)
                 ? 'border-indigo-500 bg-indigo-50 shadow-md'
@@ -506,7 +516,8 @@ const TimeLimitsStep = ({
           <li>• Max sessions per day: <strong>{maxSessionsPerDay}</strong></li>
           {dailyTimeLimit > 0 && (
             <li className="mt-3 text-xs text-indigo-600">
-              You can have up to {Math.floor(dailyTimeLimit / defaultSessionDuration)} sessions of {formatTime(defaultSessionDuration)} each within your daily limit.
+              You can have up to {Math.max(1, Math.floor(dailyTimeLimit / defaultSessionDuration))} sessions of {formatTime(defaultSessionDuration)} each within your daily limit.
+              {dailyTimeLimit < defaultSessionDuration && ' (Session duration exceeds daily limit)'}
             </li>
           )}
         </ul>

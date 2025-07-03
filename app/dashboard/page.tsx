@@ -34,7 +34,7 @@ export default function DashboardPage() {
         setUser(data.user);
         
         // Check if user needs to complete onboarding
-        const { needsOnboarding, error } = await checkOnboardingStatus('current');
+        const { needsOnboarding, error } = await checkOnboardingStatus();
         if (needsOnboarding && !error) {
           router.push('/auth/onboarding');
           return;
