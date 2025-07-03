@@ -140,7 +140,9 @@ const InterestsStep = ({
   const toggleInterest = (interestId: string) => {
     const newInterests = selectedInterests.includes(interestId)
       ? selectedInterests.filter(id => id !== interestId)
-      : [...selectedInterests, interestId];
+      : selectedInterests.length < 15
+        ? [...selectedInterests, interestId]
+        : selectedInterests;
     setSelectedInterests(newInterests);
   };
 
@@ -157,6 +159,9 @@ const InterestsStep = ({
         </p>
         <p className="text-sm text-gray-500">
           Selected: {selectedInterests.length} interests
+          {selectedInterests.length >= 15 && (
+            <span className="text-amber-600 font-medium"> (Maximum reached)</span>
+          )}
         </p>
       </div>
 
@@ -341,6 +346,8 @@ const TimeLimitsStep = ({
     }
   };
 
+  const isCustomDurationValid = !customDuration || (parseInt(customDuration) >= 15 && parseInt(customDuration) <= 240);
+
   const formatTime = (minutes: number) => {
     if (minutes === -1) return 'Unlimited';
     if (minutes < 60) return `${minutes} min`;
@@ -394,8 +401,11 @@ const TimeLimitsStep = ({
               value={customDuration}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleCustomDurationChange(e.target.value)}
               placeholder="Enter minutes (15-240)"
-              className="w-full"
+              className={`w-full ${!isCustomDurationValid ? 'border-red-500' : ''}`}
             />
+            {!isCustomDurationValid && customDuration && (
+              <p className="text-sm text-red-600 mt-1">Please enter a value between 15 and 240 minutes</p>
+            )}
           </div>
         )}
         
@@ -573,6 +583,15 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     setIsLoading(true);
     setError('');
+
+    // Validate interests are valid category IDs
+    const validCategoryIds = INTEREST_CATEGORIES.map(cat => cat.id);
+    const invalidInterests = selectedInterests.filter(id => !validCategoryIds.includes(id));
+    if (invalidInterests.length > 0) {
+      setError('Invalid interests selected. Please refresh and try again.');
+      setIsLoading(false);
+      return;
+    }
     
     try {
       const response = await fetch('/api/auth/onboarding', {
