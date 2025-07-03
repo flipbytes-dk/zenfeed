@@ -47,7 +47,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get client information for audit logging
-    const clientIP = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    const clientIP = forwardedFor
+      ? forwardedFor.split(',')[0].trim()
+      : request.headers.get('x-real-ip') || 'unknown';
     const userAgent = request.headers.get('user-agent') || 'unknown';
 
     // Initialize security service
@@ -61,7 +64,6 @@ export async function POST(request: NextRequest) {
       email: session.email,
       ip: clientIP,
       userAgent: userAgent,
-      password: password,
       accountAge: accountAge
     });
 
@@ -137,17 +139,22 @@ export async function POST(request: NextRequest) {
     }
 
     // Send security notification for successful deletion
-    await securityService.sendSecurityNotifications({
-      email: session.email,
-      eventType: 'deletion_success',
-      details: {
-        timestamp: removalResult.auditLog.timestamp,
-        riskLevel: securityCheck.riskLevel,
-        removedData: removalResult.removedData,
-        ip: clientIP,
-        userAgent: userAgent
-      }
-    });
+    try {
+      await securityService.sendSecurityNotifications({
+        email: session.email,
+        eventType: 'deletion_success',
+        details: {
+          timestamp: removalResult.auditLog.timestamp,
+          riskLevel: securityCheck.riskLevel,
+          removedData: removalResult.removedData,
+          ip: clientIP,
+          userAgent: userAgent
+        }
+      });
+    } catch (notificationError) {
+      console.error('Failed to send deletion notification:', notificationError);
+      // Continue with successful response since deletion succeeded
+    }
 
     // Create response with comprehensive deletion information
     const response = NextResponse.json(

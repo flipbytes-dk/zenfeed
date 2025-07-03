@@ -266,8 +266,9 @@ export class DataRemovalService {
       // - UI/UX preferences
       // - Privacy settings
       
-      result.removedData.userPreferences = true;
-      console.log(`✓ User preferences removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.userPreferences = false;
+      console.log(`- User preferences removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove user preferences: ${errorMessage}`);
@@ -287,8 +288,9 @@ export class DataRemovalService {
       // - Custom categories
       // - Shared content
       
-      result.removedData.userContent = true;
-      console.log(`✓ User content removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.userContent = false;
+      console.log(`- User content removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove user content: ${errorMessage}`);
@@ -308,8 +310,9 @@ export class DataRemovalService {
       // - A/B testing data
       // - User behavior tracking
       
-      result.removedData.analytics = true;
-      console.log(`✓ Analytics data removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.analytics = false;
+      console.log(`- Analytics data removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove analytics data: ${errorMessage}`);
@@ -329,8 +332,9 @@ export class DataRemovalService {
       // - Cancel recurring charges
       // - Remove subscription preferences
       
-      result.removedData.subscriptions = true;
-      console.log(`✓ Subscription data removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.subscriptions = false;
+      console.log(`- Subscription data removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove subscription data: ${errorMessage}`);
@@ -350,8 +354,9 @@ export class DataRemovalService {
       // - Temporary files
       // - Media files
       
-      result.removedData.fileStorage = true;
-      console.log(`✓ File storage removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.fileStorage = false;
+      console.log(`- File storage removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove file storage: ${errorMessage}`);
@@ -371,8 +376,9 @@ export class DataRemovalService {
       // - API response cache
       // - User-specific cache
       
-      result.removedData.cacheData = true;
-      console.log(`✓ Cache data removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.cacheData = false;
+      console.log(`- Cache data removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove cache data: ${errorMessage}`);
@@ -392,8 +398,9 @@ export class DataRemovalService {
       // - Audit log backups
       // - Disaster recovery data
       
-      result.removedData.backups = true;
-      console.log(`✓ Backup data removed for: ${email}`);
+      // Set to false until implemented
+      result.removedData.backups = false;
+      console.log(`- Backup data removal not implemented for: ${email}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove backup data: ${errorMessage}`);
@@ -413,13 +420,13 @@ export class DataRemovalService {
         verifications: pendingVerifications.has(options.email),
         passwordResets: passwordResets.has(options.email),
         rateLimitData: resendAttempts.has(options.email) || resetAttempts.has(options.email),
-        userPreferences: true,
-        userContent: true,
-        analytics: true,
-        subscriptions: true,
-        fileStorage: true,
-        cacheData: true,
-        backups: true,
+        userPreferences: false,
+        userContent: false,
+        analytics: false,
+        subscriptions: false,
+        fileStorage: false,
+        cacheData: false,
+        backups: !options.skipBackups && false,
       },
       auditLog: {
         userId: options.userId,
@@ -438,7 +445,16 @@ export class DataRemovalService {
   private logDataRemoval(email: string, result: DataRemovalResult): void {
     const existingLogs = this.removalLog.get(email) || [];
     existingLogs.push(result);
+    
+    // Keep only last 10 entries per user in memory to prevent memory leaks
+    if (existingLogs.length > 10) {
+      existingLogs.shift();
+    }
+    
     this.removalLog.set(email, existingLogs);
+    
+    // Persist to database or external audit service
+    this.persistAuditLog(email, result);
     
     // TODO: In production, this should be stored in a persistent audit log
     console.log(`[AUDIT] Data removal logged for: ${email}`, {
@@ -446,6 +462,24 @@ export class DataRemovalService {
       success: result.success,
       initiatedBy: result.auditLog.initiatedBy,
     });
+  }
+
+  /**
+   * Persist audit log to external storage (placeholder for implementation)
+   */
+  private async persistAuditLog(email: string, result: DataRemovalResult): Promise<void> {
+    // TODO: In production, implement database or external service persistence
+    // This is critical for GDPR compliance
+    try {
+      // Placeholder for persistent storage implementation
+      console.log(`[AUDIT PERSIST] Persisting audit log for: ${email}`, {
+        timestamp: result.auditLog.timestamp,
+        success: result.success,
+        initiatedBy: result.auditLog.initiatedBy,
+      });
+    } catch (error) {
+      console.error('Failed to persist audit log:', error);
+    }
   }
 
   /**

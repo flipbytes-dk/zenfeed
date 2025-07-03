@@ -129,7 +129,7 @@ export default function DashboardPage() {
                     </h3>
                     <div className="mt-2 text-sm text-blue-700">
                       <p>
-                        We're working on content curation, time management, analytics, 
+                        We&apos;re working on content curation, time management, analytics, 
                         and other exciting features to help you consume social media mindfully.
                       </p>
                     </div>

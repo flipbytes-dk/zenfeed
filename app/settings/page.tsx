@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 
 interface UserData {
@@ -46,13 +45,24 @@ export default function SettingsPage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      const response = await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include',
       });
-      router.push('/auth/login');
+
+      if (response.ok) {
+        router.push('/auth/login');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Logout failed:', errorData);
+        // TODO: Show toast notification for logout failure
+        // For now, redirect anyway as fallback
+        router.push('/auth/login');
+      }
     } catch (error) {
       console.error('Logout error:', error);
+      // TODO: Show toast notification for network errors
+      // For now, redirect anyway as fallback
       router.push('/auth/login');
     }
   };

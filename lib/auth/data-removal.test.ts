@@ -183,6 +183,9 @@ describe('DataRemovalService', () => {
         initiatedBy: 'test_user'
       });
 
+      // Verify removal was successful
+      expect(result.success).toBe(true);
+
       // Check history
       const history = dataRemovalService.getRemovalHistory(testEmail);
       expect(history).toHaveLength(1);

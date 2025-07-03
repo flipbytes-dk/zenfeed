@@ -6,16 +6,16 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-interface UserData {
+interface ClientUserData {
   email: string;
   verified: boolean;
-  createdAt: string;
+  createdAt: string; // ISO string from API
 }
 
 type DeletionStep = 'initial' | 'confirmation' | 'password' | 'final';
 
 export default function DeleteAccountPage() {
-  const [user, setUser] = useState<UserData | null>(null);
+  const [user, setUser] = useState<ClientUserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentStep, setCurrentStep] = useState<DeletionStep>('initial');
   const [password, setPassword] = useState('');
@@ -106,6 +106,10 @@ export default function DeleteAccountPage() {
   };
 
   const handleFinalDeletion = async () => {
+    if (isDeleting) {
+      return; // Prevent double submissions
+    }
+
     if (!validatePassword() || !validateConfirmText()) {
       return;
     }
@@ -424,7 +428,7 @@ export default function DeleteAccountPage() {
 
                   <div className="mb-6">
                     <label htmlFor="confirmText" className="block text-sm font-medium text-gray-700 mb-2">
-                      Type "DELETE MY ACCOUNT" to confirm:
+                      Type &ldquo;DELETE MY ACCOUNT&rdquo; to confirm:
                     </label>
                     <Input
                       id="confirmText"
@@ -433,10 +437,10 @@ export default function DeleteAccountPage() {
                       onChange={(e) => setConfirmText(e.target.value)}
                       placeholder="DELETE MY ACCOUNT"
                       className="w-full"
-                    />
-                  </div>
+                                          />
+                    </div>
 
-                  {error && (
+                    {error && (
                     <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-6">
                       {error}
                     </div>

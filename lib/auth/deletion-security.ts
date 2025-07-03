@@ -3,8 +3,6 @@
  * Comprehensive security measures and audit logging for account deletion
  */
 
-import { DataRemovalService } from './data-removal';
-
 // Security configuration
 const DELETION_SECURITY_CONFIG = {
   // Rate limiting
@@ -89,7 +87,6 @@ export class DeletionSecurityService {
     email: string;
     ip: string;
     userAgent: string;
-    password: string;
     accountAge?: number;
   }): Promise<SecurityCheckResult> {
     const securityFlags: string[] = [];
@@ -358,7 +355,7 @@ export class DeletionSecurityService {
    * Generate audit log ID
    */
   private generateAuditLogId(): string {
-    return 'audit_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+    return 'audit_' + crypto.randomUUID();
   }
 
   /**
