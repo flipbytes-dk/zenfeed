@@ -38,7 +38,9 @@
 - `app/api/auth/reset-password/route.ts` - API route for handling password reset requests and sending reset emails.
 - `app/auth/reset-password/confirm/page.tsx` - Password reset confirmation page where users enter their new password.
 - `app/api/auth/reset-password/confirm/route.ts` - API route for confirming password reset with token validation.
-- `lib/stores/verification-store.ts` - Updated shared store with session management and password reset tokens.
+- `lib/stores/verification-store.ts` - Updated shared store with session management, password reset tokens, and onboarding preferences.
+- `app/auth/onboarding/page.tsx` - Multi-step onboarding flow for user preferences and initial setup with data submission.
+- `app/api/auth/onboarding/route.ts` - API endpoint for storing and retrieving user onboarding preferences.
 - `components/ui/button.tsx` - shadcn/ui Button component.
 - `components/ui/input.tsx` - shadcn/ui Input component.
 
@@ -54,7 +56,12 @@
   - [x] 1.2 Implement email verification flow
   - [x] 1.3 Implement login and logout functionality
   - [x] 1.4 Implement password reset via email
-  - [ ] 1.5 Implement onboarding flow for initial preferences (interests, time limits)
+  - [x] 1.5 Implement onboarding flow for initial preferences (interests, time limits)
+    - [x] 1.5.1 Create onboarding page structure and routing
+    - [x] 1.5.2 Implement interest/topic selection interface
+    - [x] 1.5.3 Implement time limit preference settings
+    - [x] 1.5.4 Add onboarding data storage and API endpoints
+    - [x] 1.5.5 Integrate onboarding flow with registration/login
   - [ ] 1.6 Implement account deletion and data removal
   - [ ] 1.7 Add authentication tests (unit/integration)
 

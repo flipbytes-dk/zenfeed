@@ -93,4 +93,56 @@ export function cleanupExpiredSessions(): number {
   }
 
   return cleanedCount;
+}
+
+/**
+ * Check if a user needs to complete onboarding
+ * @param userId - The user's ID or email
+ * @returns Promise<boolean> - true if onboarding is needed
+ */
+export async function checkOnboardingStatus(userId: string): Promise<{ needsOnboarding: boolean; error?: string }> {
+  try {
+    const response = await fetch('/api/auth/onboarding', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return { needsOnboarding: true, error: 'Failed to check onboarding status' };
+    }
+
+    const data = await response.json();
+    return { needsOnboarding: !data.onboardingCompleted };
+  } catch (error) {
+    console.error('Error checking onboarding status:', error);
+    return { needsOnboarding: true, error: 'Network error' };
+  }
+}
+
+/**
+ * Redirect user to appropriate page after authentication
+ * @param router - Next.js router instance
+ * @param redirectTo - Optional redirect URL
+ */
+export async function handlePostAuthRedirect(router: any, redirectTo?: string) {
+  try {
+    const { needsOnboarding, error } = await checkOnboardingStatus('current');
+    
+    if (error) {
+      console.warn('Onboarding check failed, redirecting to dashboard:', error);
+      router.push(redirectTo || '/dashboard');
+      return;
+    }
+
+    if (needsOnboarding) {
+      router.push('/auth/onboarding');
+    } else {
+      router.push(redirectTo || '/dashboard');
+    }
+  } catch (error) {
+    console.error('Error in post-auth redirect:', error);
+    router.push(redirectTo || '/dashboard');
+  }
 } 
