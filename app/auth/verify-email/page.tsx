@@ -29,7 +29,12 @@ export default function VerifyEmailPage() {
       },
       body: JSON.stringify({ token, email }),
     })
-      .then((response) => response.json())
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then((data) => {
         if (data.success) {
           setStatus('success');
@@ -63,10 +68,11 @@ export default function VerifyEmailPage() {
         body: JSON.stringify({ email }),
       });
 
+      const data = await response.json();
       if (response.ok) {
         setMessage('Verification email sent! Please check your inbox.');
       } else {
-        setMessage('Failed to resend verification email. Please try again.');
+        setMessage(data.message || 'Failed to resend verification email. Please try again.');
       }
     } catch (error) {
       setMessage('An error occurred. Please try again.');
@@ -94,7 +100,7 @@ export default function VerifyEmailPage() {
           
           {status === 'success' && (
             <div className="text-center">
-              <div className="text-green-600 text-5xl mb-4">✓</div>
+              <div className="text-green-600 text-5xl mb-4" aria-label="Success">✓</div>
               <p className="text-green-600 font-medium mb-4">{message}</p>
               <Link href="/auth/register">
                 <Button className="w-full">Continue to Registration</Button>
@@ -104,7 +110,7 @@ export default function VerifyEmailPage() {
           
           {status === 'error' && (
             <div className="text-center">
-              <div className="text-red-600 text-5xl mb-4">✗</div>
+              <div className="text-red-600 text-5xl mb-4" aria-label="Error">✗</div>
               <p className="text-red-600 font-medium mb-4">{message}</p>
               <Link href="/auth/register">
                 <Button className="w-full">Back to Registration</Button>
@@ -114,7 +120,7 @@ export default function VerifyEmailPage() {
           
           {status === 'expired' && (
             <div className="text-center">
-              <div className="text-yellow-600 text-5xl mb-4">⏰</div>
+              <div className="text-yellow-600 text-5xl mb-4" aria-label="Expired">⏰</div>
               <p className="text-yellow-600 font-medium mb-4">{message}</p>
               <Button 
                 onClick={resendVerification} 

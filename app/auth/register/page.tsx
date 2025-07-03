@@ -19,6 +19,12 @@ export default function RegisterPage() {
     setSuccess("");
     
     // Client-side validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
@@ -42,15 +48,23 @@ export default function RegisterPage() {
 
       const data = await response.json();
 
-      if (response.ok) {
-        setSuccess(data.message);
-        // Clear form
-        setEmail("");
-        setPassword("");
-        setConfirmPassword("");
-      } else {
-        setError(data.message || 'Registration failed. Please try again.');
-      }
+          if (response.ok) {
+      setError(""); // Clear any previous errors
+      setSuccess(data.message);
+      // Clear form
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
+    } else {
+      // Map specific error codes to user-friendly messages
+      const errorMessages: Record<string, string> = {
+        'user_exists': 'An account with this email already exists.',
+        'invalid_email': 'Please enter a valid email address.',
+        'weak_password': 'Password must be at least 8 characters long.',
+        'email_failed': 'Unable to send verification email. Please try again.',
+      };
+      setError(errorMessages[data.error] || data.message || 'Registration failed. Please try again.');
+    }
     } catch (err) {
       setError("Network error. Please check your connection and try again.");
     } finally {
@@ -70,6 +84,8 @@ export default function RegisterPage() {
           <Input
             type="email"
             placeholder="Email"
+            aria-label="Email address"
+            autoComplete="email"
             value={email}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
             required
@@ -77,6 +93,8 @@ export default function RegisterPage() {
           <Input
             type="password"
             placeholder="Password (minimum 8 characters)"
+            aria-label="Password"
+            autoComplete="new-password"
             value={password}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
             required
@@ -84,6 +102,8 @@ export default function RegisterPage() {
           <Input
             type="password"
             placeholder="Confirm Password"
+            aria-label="Confirm password"
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
             required

@@ -1,22 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-
-// TODO: Replace with actual database integration
-// Simple in-memory storage for demonstration
-const users = new Map<string, {
-  email: string;
-  passwordHash: string;
-  verified: boolean;
-  createdAt: Date;
-}>();
-
-const pendingVerifications = new Map<string, {
-  email: string;
-  token: string;
-  expires: Date;
-  verified: boolean;
-}>();
+import { users, pendingVerifications, TOKEN_EXPIRY_MS } from '@/lib/stores/verification-store';
 
 // Helper function to generate verification token
 function generateVerificationToken(): string {
@@ -86,7 +71,7 @@ export async function POST(request: NextRequest) {
 
     // Generate verification token
     const token = generateVerificationToken();
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expires = new Date(Date.now() + TOKEN_EXPIRY_MS);
 
     // Store verification request
     pendingVerifications.set(email, {

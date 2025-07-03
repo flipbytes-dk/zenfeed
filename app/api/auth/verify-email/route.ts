@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-// TODO: Replace with actual database integration
-// For now, we'll use a simple in-memory store for demonstration
-const pendingVerifications = new Map<string, {
-  email: string;
-  token: string;
-  expires: Date;
-  verified: boolean;
-}>();
+import { timingSafeEqual } from 'crypto';
+import { pendingVerifications } from '@/lib/stores/verification-store';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +9,23 @@ export async function POST(request: NextRequest) {
     if (!token || !email) {
       return NextResponse.json(
         { error: 'missing_params', message: 'Token and email are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'invalid_email', message: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Validate token format (hex string)
+    if (!/^[a-f0-9]{64}$/i.test(token)) {
+      return NextResponse.json(
+        { error: 'invalid_token', message: 'Invalid token format' },
         { status: 400 }
       );
     }
@@ -44,7 +54,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (verification.token !== token) {
+    // Use constant-time comparison to prevent timing attacks
+    if (!timingSafeEqual(Buffer.from(verification.token), Buffer.from(token))) {
       return NextResponse.json(
         { error: 'invalid_token', message: 'Invalid verification token' },
         { status: 400 }

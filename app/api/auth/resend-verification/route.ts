@@ -1,14 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-
-// TODO: Replace with actual database integration
-// This should match the store in verify-email/route.ts
-const pendingVerifications = new Map<string, {
-  email: string;
-  token: string;
-  expires: Date;
-  verified: boolean;
-}>();
+import { pendingVerifications, resendAttempts, MAX_RESEND_ATTEMPTS, RESEND_WINDOW_MS, TOKEN_EXPIRY_MS } from '@/lib/stores/verification-store';
 
 // Helper function to generate verification token
 function generateVerificationToken(): string {
@@ -19,7 +11,8 @@ function generateVerificationToken(): string {
 async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
   // TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
   console.log(`Sending verification email to: ${email}`);
-  console.log(`Verification link: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`);
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+  console.log(`Verification link: ${baseUrl}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`);
   
   // Simulate email sending
   return new Promise((resolve) => {
@@ -47,11 +40,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Rate limiting check
+    const now = new Date();
+    const attemptKey = email;
+    const attempts = resendAttempts.get(attemptKey);
+
+    if (attempts) {
+      const timeSinceFirst = now.getTime() - attempts.lastAttempt.getTime();
+      if (timeSinceFirst < RESEND_WINDOW_MS && attempts.count >= MAX_RESEND_ATTEMPTS) {
+        return NextResponse.json(
+          { error: 'rate_limited', message: 'Too many resend attempts. Please try again later.' },
+          { status: 429 }
+        );
+      }
+    }
+
     // TODO: Check if user exists in database
     // For now, we'll allow resending for any email
 
     const existingVerification = pendingVerifications.get(email);
-    if (existingVerification && existingVerification.verified) {
+    if (existingVerification?.verified) {
       return NextResponse.json(
         { error: 'already_verified', message: 'Email is already verified' },
         { status: 400 }
@@ -60,7 +68,7 @@ export async function POST(request: NextRequest) {
 
     // Generate new verification token
     const token = generateVerificationToken();
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const expires = new Date(Date.now() + TOKEN_EXPIRY_MS);
 
     // Store verification request
     pendingVerifications.set(email, {
@@ -79,6 +87,12 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Update attempts counter
+    resendAttempts.set(attemptKey, {
+      count: (attempts?.count || 0) + 1,
+      lastAttempt: now,
+    });
 
     return NextResponse.json(
       { message: 'Verification email sent successfully' },
