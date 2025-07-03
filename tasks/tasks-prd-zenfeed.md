@@ -28,6 +28,10 @@
 - `app/api/auth/register/route.ts` - API route for user registration and sending verification emails.
 - `app/api/auth/verify-email/route.ts` - API route for handling email verification.
 - `app/api/auth/resend-verification/route.ts` - API route for resending verification emails.
+- `app/auth/reset-password/page.tsx` - Password reset request page where users enter their email.
+- `app/api/auth/reset-password/route.ts` - API route for handling password reset requests and sending reset emails.
+- `app/auth/reset-password/confirm/page.tsx` - Password reset confirmation page where users enter their new password.
+- `app/api/auth/reset-password/confirm/route.ts` - API route for confirming password reset with token validation.
 - `components/ui/button.tsx` - shadcn/ui Button component.
 - `components/ui/input.tsx` - shadcn/ui Input component.
 
@@ -41,8 +45,8 @@
 - [ ] 1.0 User Authentication & Onboarding
   - [x] 1.1 Implement user registration with email and password
   - [x] 1.2 Implement email verification flow
-  - [ ] 1.3 Implement login and logout functionality
-  - [ ] 1.4 Implement password reset via email
+  - [x] 1.3 Implement login and logout functionality
+  - [x] 1.4 Implement password reset via email
   - [ ] 1.5 Implement onboarding flow for initial preferences (interests, time limits)
   - [ ] 1.6 Implement account deletion and data removal
   - [ ] 1.7 Add authentication tests (unit/integration)

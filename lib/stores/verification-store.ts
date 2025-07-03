@@ -8,6 +8,13 @@ export interface VerificationData {
   verified: boolean;
 }
 
+export interface PasswordResetData {
+  email: string;
+  token: string;
+  expires: Date;
+  used: boolean;
+}
+
 export interface UserData {
   email: string;
   passwordHash: string;
@@ -18,11 +25,19 @@ export interface UserData {
 // In-memory stores for demonstration
 export const pendingVerifications = new Map<string, VerificationData>();
 export const users = new Map<string, UserData>();
+export const passwordResets = new Map<string, PasswordResetData>();
 
 // Rate limiting store for resend attempts
 export const resendAttempts = new Map<string, { count: number; lastAttempt: Date }>();
 
+// Rate limiting store for password reset attempts
+export const resetAttempts = new Map<string, { count: number; lastAttempt: Date }>();
+
 // Constants
 export const MAX_RESEND_ATTEMPTS = 3;
 export const RESEND_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-export const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours 
+export const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+export const MAX_RESET_ATTEMPTS = 3;
+export const RESET_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+export const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour (shorter for security) 
