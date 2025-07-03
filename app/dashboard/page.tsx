@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 interface UserSession {
@@ -87,6 +88,9 @@ export default function DashboardPage() {
               <h1 className="text-xl font-semibold text-gray-900">ZenFeed Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/settings" className="text-gray-600 hover:text-gray-900">
+                Settings
+              </Link>
               <span className="text-sm text-gray-700">Welcome, {user.email}</span>
               <Button 
                 onClick={handleLogout}
