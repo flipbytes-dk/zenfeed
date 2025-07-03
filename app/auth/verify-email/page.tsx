@@ -102,8 +102,8 @@ export default function VerifyEmailPage() {
             <div className="text-center">
               <div className="text-green-600 text-5xl mb-4" aria-label="Success">✓</div>
               <p className="text-green-600 font-medium mb-4">{message}</p>
-              <Link href="/auth/register">
-                <Button className="w-full">Continue to Registration</Button>
+              <Link href="/auth/login">
+                <Button className="w-full">Continue to Login</Button>
               </Link>
             </div>
           )}

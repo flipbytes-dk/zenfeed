@@ -33,6 +33,14 @@ export const resendAttempts = new Map<string, { count: number; lastAttempt: Date
 // Rate limiting store for password reset attempts
 export const resetAttempts = new Map<string, { count: number; lastAttempt: Date }>();
 
+// Session store for user authentication
+export const sessions = new Map<string, {
+  userId: string;
+  email: string;
+  expires: Date;
+  createdAt: Date;
+}>();
+
 // Constants
 export const MAX_RESEND_ATTEMPTS = 3;
 export const RESEND_WINDOW_MS = 60 * 60 * 1000; // 1 hour
@@ -40,4 +48,6 @@ export const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 export const MAX_RESET_ATTEMPTS = 3;
 export const RESET_WINDOW_MS = 60 * 60 * 1000; // 1 hour
-export const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour (shorter for security) 
+export const RESET_TOKEN_EXPIRY_MS = 60 * 60 * 1000; // 1 hour (shorter for security)
+
+export const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours

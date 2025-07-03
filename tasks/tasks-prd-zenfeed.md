@@ -28,10 +28,17 @@
 - `app/api/auth/register/route.ts` - API route for user registration and sending verification emails.
 - `app/api/auth/verify-email/route.ts` - API route for handling email verification.
 - `app/api/auth/resend-verification/route.ts` - API route for resending verification emails.
+- `app/auth/login/page.tsx` - Login page for user authentication with email and password.
+- `app/api/auth/login/route.ts` - API route for user login and session creation.
+- `app/api/auth/logout/route.ts` - API route for user logout and session termination.
+- `app/api/auth/me/route.ts` - API route for fetching authenticated user data with server-side session validation.
+- `app/dashboard/page.tsx` - Dashboard page with secure authentication and real user data.
+- `lib/auth/utils.ts` - Authentication utility functions for session validation and middleware.
 - `app/auth/reset-password/page.tsx` - Password reset request page where users enter their email.
 - `app/api/auth/reset-password/route.ts` - API route for handling password reset requests and sending reset emails.
 - `app/auth/reset-password/confirm/page.tsx` - Password reset confirmation page where users enter their new password.
 - `app/api/auth/reset-password/confirm/route.ts` - API route for confirming password reset with token validation.
+- `lib/stores/verification-store.ts` - Updated shared store with session management and password reset tokens.
 - `components/ui/button.tsx` - shadcn/ui Button component.
 - `components/ui/input.tsx` - shadcn/ui Input component.
 
