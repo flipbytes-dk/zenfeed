@@ -43,10 +43,9 @@ export default function ResetPasswordPage() {
       } else {
         // Map specific error codes to user-friendly messages
         const errorMessages: Record<string, string> = {
-          'user_not_found': 'No account found with this email address.',
-          'user_not_verified': 'Please verify your email first before resetting password.',
           'rate_limited': 'Too many reset attempts. Please wait before trying again.',
           'invalid_email': 'Please enter a valid email address.',
+          'email_failed': 'Unable to send reset email. Please try again.',
         };
         setError(errorMessages[data.error] || data.message || 'Password reset failed. Please try again.');
       }
@@ -84,7 +83,7 @@ export default function ResetPasswordPage() {
         <div className="text-center space-y-4">
           <div className="text-green-600 text-sm">{success}</div>
           <div className="text-gray-600 text-sm">
-            Check your email inbox and click the reset link to create a new password.
+            If your email is registered and verified, check your inbox for the reset link.
           </div>
           <Link href="/auth/login" className="text-blue-600 hover:underline text-sm">
             Back to Login

@@ -18,7 +18,7 @@ function generateResetToken(): string {
 async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
   // TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
   console.log(`Sending password reset email to: ${email}`);
-  console.log(`Reset link: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/reset-password/confirm?token=${token}&email=${encodeURIComponent(email)}`);
+  console.log(`Password reset requested for email: ${email} at ${new Date().toISOString()}`);
   
   // Simulate email sending
   return new Promise((resolve) => {
@@ -89,59 +89,45 @@ export async function POST(request: NextRequest) {
 
     // Check if user exists
     const user = users.get(email);
-    if (!user) {
-      // Update rate limit even for non-existent users to prevent email enumeration
-      updateRateLimit(email);
-      return NextResponse.json(
-        { error: 'user_not_found', message: 'No account found with this email address' },
-        { status: 404 }
-      );
-    }
 
-    // Check if user is verified
-    if (!user.verified) {
-      updateRateLimit(email);
-      return NextResponse.json(
-        { error: 'user_not_verified', message: 'Please verify your email first before resetting password' },
-        { status: 400 }
-      );
-    }
-
-    // Update rate limiting
+    // Always update rate limiting to prevent timing attacks
     updateRateLimit(email);
 
-    // Invalidate any existing reset tokens for this email
-    passwordResets.delete(email);
-
-    // Generate reset token
-    const token = generateResetToken();
-    const expires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
-
-    // Store password reset request
-    passwordResets.set(email, {
-      email,
-      token,
-      expires,
-      used: false,
-    });
-
-    // Send reset email
-    const emailSent = await sendPasswordResetEmail(email, token);
-
-    if (!emailSent) {
-      // Clean up reset token if email failed
+    // Only proceed with token generation if user exists and is verified
+    if (user && user.verified) {
+      // Invalidate any existing reset tokens for this email
       passwordResets.delete(email);
-      
-      return NextResponse.json(
-        { error: 'email_failed', message: 'Failed to send password reset email' },
-        { status: 500 }
-      );
+
+      // Generate reset token
+      const token = generateResetToken();
+      const expires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+
+      // Store password reset request
+      passwordResets.set(email, {
+        email,
+        token,
+        expires,
+        used: false,
+      });
+
+      // Send reset email
+      const emailSent = await sendPasswordResetEmail(email, token);
+
+      if (!emailSent) {
+        // Clean up reset token if email failed
+        passwordResets.delete(email);
+        
+        return NextResponse.json(
+          { error: 'email_failed', message: 'Failed to send password reset email' },
+          { status: 500 }
+        );
+      }
     }
 
+    // Always return the same success message to prevent enumeration
     return NextResponse.json(
-      { 
-        message: 'Password reset link sent! Please check your email.',
-        email: email 
+      {
+        message: 'If an account exists with this email, a password reset link has been sent.'
       },
       { status: 200 }
     );
