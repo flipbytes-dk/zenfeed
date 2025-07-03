@@ -34,7 +34,11 @@
 - `app/api/auth/me/route.ts` - API route for fetching authenticated user data with server-side session validation.
 - `app/dashboard/page.tsx` - Dashboard page with secure authentication and real user data.
 - `lib/auth/utils.ts` - Authentication utility functions for session validation and middleware.
-- `lib/stores/verification-store.ts` - Updated shared store with session management.
+- `app/auth/reset-password/page.tsx` - Password reset request page where users enter their email.
+- `app/api/auth/reset-password/route.ts` - API route for handling password reset requests and sending reset emails.
+- `app/auth/reset-password/confirm/page.tsx` - Password reset confirmation page where users enter their new password.
+- `app/api/auth/reset-password/confirm/route.ts` - API route for confirming password reset with token validation.
+- `lib/stores/verification-store.ts` - Updated shared store with session management and password reset tokens.
 - `components/ui/button.tsx` - shadcn/ui Button component.
 - `components/ui/input.tsx` - shadcn/ui Input component.
 
@@ -49,7 +53,7 @@
   - [x] 1.1 Implement user registration with email and password
   - [x] 1.2 Implement email verification flow
   - [x] 1.3 Implement login and logout functionality
-  - [ ] 1.4 Implement password reset via email
+  - [x] 1.4 Implement password reset via email
   - [ ] 1.5 Implement onboarding flow for initial preferences (interests, time limits)
   - [ ] 1.6 Implement account deletion and data removal
   - [ ] 1.7 Add authentication tests (unit/integration)
