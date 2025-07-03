@@ -31,7 +31,8 @@
 - `app/auth/login/page.tsx` - Login page for user authentication with email and password.
 - `app/api/auth/login/route.ts` - API route for user login and session creation.
 - `app/api/auth/logout/route.ts` - API route for user logout and session termination.
-- `app/dashboard/page.tsx` - Simple dashboard page showing logged-in user status.
+- `app/api/auth/me/route.ts` - API route for fetching authenticated user data with server-side session validation.
+- `app/dashboard/page.tsx` - Dashboard page with secure authentication and real user data.
 - `lib/auth/utils.ts` - Authentication utility functions for session validation and middleware.
 - `lib/stores/verification-store.ts` - Updated shared store with session management.
 - `components/ui/button.tsx` - shadcn/ui Button component.

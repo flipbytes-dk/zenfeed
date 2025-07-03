@@ -16,25 +16,21 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated
-    // For now, we'll implement this check on the client side
-    // In a real app, you'd want server-side authentication
+    // Check if user is authenticated using secure server-side validation
     const checkAuth = async () => {
       try {
-        // We'll create a user profile endpoint later
-        // For now, let's just check if we have a session cookie
-        const hasSession = document.cookie.includes('session=');
-        if (!hasSession) {
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
           router.push('/auth/login');
           return;
         }
         
-        // Mock user data for now - in real app, fetch from API
-        setUser({
-          email: 'user@example.com',
-          verified: true,
-          createdAt: new Date().toISOString(),
-        });
+        const data = await response.json();
+        setUser(data.user);
       } catch (error) {
         console.error('Auth check failed:', error);
         router.push('/auth/login');
@@ -56,10 +52,17 @@ export default function DashboardPage() {
       if (response.ok) {
         router.push('/auth/login');
       } else {
-        console.error('Logout failed');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Logout failed:', errorData);
+        // TODO: Show toast notification for logout failure
+        // For now, redirect anyway as fallback
+        router.push('/auth/login');
       }
     } catch (error) {
       console.error('Logout error:', error);
+      // TODO: Show toast notification for network errors
+      // For now, redirect anyway as fallback
+      router.push('/auth/login');
     }
   };
 
