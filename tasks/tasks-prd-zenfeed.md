@@ -23,6 +23,13 @@
 - `packages/ui/` - Shared UI components (shadcn/ui, Tailwind CSS).
 - `lib/utils/` - Utility functions and helpers.
 - `lib/utils/__tests__/` - Utility function tests.
+- `app/auth/register/page.tsx` - Registration page for user sign up with email and password.
+- `app/auth/verify-email/page.tsx` - Email verification page that handles verification tokens.
+- `app/api/auth/register/route.ts` - API route for user registration and sending verification emails.
+- `app/api/auth/verify-email/route.ts` - API route for handling email verification.
+- `app/api/auth/resend-verification/route.ts` - API route for resending verification emails.
+- `components/ui/button.tsx` - shadcn/ui Button component.
+- `components/ui/input.tsx` - shadcn/ui Input component.
 
 ### Notes
 
@@ -33,7 +40,7 @@
 
 - [ ] 1.0 User Authentication & Onboarding
   - [x] 1.1 Implement user registration with email and password
-  - [ ] 1.2 Implement email verification flow
+  - [x] 1.2 Implement email verification flow
   - [ ] 1.3 Implement login and logout functionality
   - [ ] 1.4 Implement password reset via email
   - [ ] 1.5 Implement onboarding flow for initial preferences (interests, time limits)
