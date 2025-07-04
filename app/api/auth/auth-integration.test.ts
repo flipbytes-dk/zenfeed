@@ -46,7 +46,7 @@ describe('Authentication Integration Tests', () => {
   const testName = 'Integration Test User';
 
   // Helper function to create a request
-  const createRequest = (url: string, method: string, body?: any, headers?: Record<string, string>) => {
+  const createRequest = (url: string, method: string, body?: Record<string, unknown>, headers?: Record<string, string>) => {
     const requestHeaders = {
       'Content-Type': 'application/json',
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',

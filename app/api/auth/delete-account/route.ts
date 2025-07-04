@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
         details: {
           timestamp: removalResult.auditLog.timestamp,
           riskLevel: securityCheck.riskLevel,
-          removedData: removalResult.removedData,
+          removedData: JSON.stringify(removalResult.removedData),
           ip: clientIP,
           userAgent: userAgent
         }
