@@ -594,10 +594,9 @@ describe('Authentication Integration Tests', () => {
       const sessionId = 'session_' + Date.now();
       sessions.set(sessionId, {
         userId: testEmail,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        ip: '127.0.0.1',
-        userAgent: 'Mozilla/5.0 Test'
+        email: testEmail,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdAt: new Date()
       });
 
       mockGetAuthenticatedUser.mockResolvedValue({
@@ -615,7 +614,7 @@ describe('Authentication Integration Tests', () => {
 
       const onboardingRequest = createRequest('http://localhost:3000/api/auth/onboarding', 'POST', {
         interests: ['technology', 'science'],
-        sessionDuration: 30,
+        defaultSessionDuration: 30,
         dailyTimeLimit: 120,
         maxSessionsPerDay: 3
       });
@@ -675,7 +674,7 @@ describe('Authentication Integration Tests', () => {
 
       const onboardingRequest = createRequest('http://localhost:3000/api/auth/onboarding', 'POST', {
         interests: ['technology', 'science'],
-        sessionDuration: 30,
+        defaultSessionDuration: 30,
         dailyTimeLimit: 120,
         maxSessionsPerDay: 3
       });
