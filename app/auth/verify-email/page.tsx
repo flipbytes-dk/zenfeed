@@ -77,7 +77,8 @@ export default function VerifyEmailPage() {
       } else {
         setMessage(data.message || 'Failed to resend verification email. Please try again.');
       }
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       setMessage('An error occurred. Please try again.');
     } finally {
       setIsResending(false);

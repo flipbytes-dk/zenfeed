@@ -15,7 +15,8 @@ function generateResetToken(): string {
 }
 
 // Helper function to send password reset email (mock implementation)
-async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+async function sendPasswordResetEmail(email: string, _token: string): Promise<boolean> {
   // TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
   console.log(`Sending password reset email to: ${email}`);
   console.log(`Password reset requested for email: ${email} at ${new Date().toISOString()}`);

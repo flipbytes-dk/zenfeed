@@ -33,6 +33,14 @@
 - `app/api/auth/logout/route.ts` - API route for user logout and session termination.
 - `app/api/auth/me/route.ts` - API route for fetching authenticated user data with server-side session validation.
 - `app/dashboard/page.tsx` - Dashboard page with secure authentication and real user data.
+- `app/settings/page.tsx` - Settings page with account management and deletion UI.
+- `app/settings/delete-account/page.tsx` - Multi-step account deletion confirmation flow with password verification.
+- `app/auth/deleted/page.tsx` - Post-deletion confirmation page shown after successful account deletion.
+- `app/api/auth/delete-account/route.ts` - Backend API endpoint for account deletion with authentication and data removal.
+- `lib/auth/data-removal.ts` - Comprehensive data removal service for complete user data deletion across all storage systems.
+- `lib/auth/data-removal.test.ts` - Test suite for the data removal service to ensure comprehensive data cleanup.
+- `lib/auth/deletion-security.ts` - Advanced security service with rate limiting, audit logging, and comprehensive security checks for deletions.
+- `lib/auth/deletion-security.test.ts` - Test suite for the deletion security service with comprehensive security scenario testing.
 - `lib/auth/utils.ts` - Authentication utility functions for session validation and middleware.
 - `app/auth/reset-password/page.tsx` - Password reset request page where users enter their email.
 - `app/api/auth/reset-password/route.ts` - API route for handling password reset requests and sending reset emails.
@@ -51,7 +59,7 @@
 
 ## Tasks
 
-- [ ] 1.0 User Authentication & Onboarding
+- [x] 1.0 User Authentication & Onboarding
   - [x] 1.1 Implement user registration with email and password
   - [x] 1.2 Implement email verification flow
   - [x] 1.3 Implement login and logout functionality
@@ -62,7 +70,12 @@
     - [x] 1.5.3 Implement time limit preference settings
     - [x] 1.5.4 Add onboarding data storage and API endpoints
     - [x] 1.5.5 Integrate onboarding flow with registration/login
-  - [ ] 1.6 Implement account deletion and data removal
+  - [x] 1.6 Implement account deletion and data removal
+    - [x] 1.6.1 Create account deletion UI in settings/profile section
+    - [x] 1.6.2 Implement deletion confirmation flow with password verification
+    - [x] 1.6.3 Create backend API endpoint for account deletion
+    - [x] 1.6.4 Implement complete data removal from all storage systems
+    - [x] 1.6.5 Add security measures and audit logging for deletions
   - [ ] 1.7 Add authentication tests (unit/integration)
 
 - [ ] 2.0 Content Source Management & Integration
