@@ -137,7 +137,7 @@ export class DataRemovalService {
       result.success = result.errors.length === 0;
       
       // Log the removal operation
-      this.logDataRemoval(options.email, result);
+      await this.logDataRemoval(options.email, result);
       
       console.log(`Data removal completed for user: ${options.email}`, {
         success: result.success,
@@ -442,7 +442,7 @@ export class DataRemovalService {
   /**
    * Log data removal operation for audit purposes
    */
-  private logDataRemoval(email: string, result: DataRemovalResult): void {
+  private async logDataRemoval(email: string, result: DataRemovalResult): Promise<void> {
     const existingLogs = this.removalLog.get(email) || [];
     existingLogs.push(result);
     
@@ -454,7 +454,12 @@ export class DataRemovalService {
     this.removalLog.set(email, existingLogs);
     
     // Persist to database or external audit service
-    this.persistAuditLog(email, result);
+    try {
+      await this.persistAuditLog(email, result);
+    } catch (error) {
+      console.error('Failed to persist audit log for:', email, error);
+      // Don't fail the entire operation due to audit persistence issues
+    }
     
     // TODO: In production, this should be stored in a persistent audit log
     console.log(`[AUDIT] Data removal logged for: ${email}`, {

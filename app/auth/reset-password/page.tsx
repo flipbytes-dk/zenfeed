@@ -49,7 +49,8 @@ export default function ResetPasswordPage() {
         };
         setError(errorMessages[data.error] || data.message || 'Password reset failed. Please try again.');
       }
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       setError("Network error. Please check your connection and try again.");
     } finally {
       setLoading(false);

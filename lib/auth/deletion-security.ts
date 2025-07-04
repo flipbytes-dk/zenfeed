@@ -49,6 +49,8 @@ export interface DeletionAttempt {
   securityFlags: string[];
 }
 
+type AuditLogDetails = Record<string, string | number | boolean | null | undefined | string[]>;
+
 export interface AuditLogEntry {
   id: string;
   timestamp: Date;
@@ -56,7 +58,7 @@ export interface AuditLogEntry {
   email: string;
   ip: string;
   userAgent: string;
-  details: Record<string, any>;
+  details: AuditLogDetails;
   riskLevel: 'low' | 'medium' | 'high';
   securityFlags: string[];
   adminNotified: boolean;
@@ -242,7 +244,7 @@ export class DeletionSecurityService {
   public async sendSecurityNotifications(options: {
     email: string;
     eventType: 'deletion_success' | 'deletion_blocked' | 'suspicious_activity';
-    details: Record<string, any>;
+    details: AuditLogDetails;
   }): Promise<void> {
     // TODO: In production, implement actual email/SMS notifications
     console.log(`[SECURITY NOTIFICATION] ${options.eventType.toUpperCase()}:`, {
@@ -289,7 +291,7 @@ export class DeletionSecurityService {
     email: string;
     ip: string;
     userAgent: string;
-    details: Record<string, any>;
+    details: AuditLogDetails;
     riskLevel: 'low' | 'medium' | 'high';
     securityFlags: string[];
     recoveryCode?: string;
