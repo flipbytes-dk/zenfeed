@@ -76,7 +76,13 @@
     - [x] 1.6.3 Create backend API endpoint for account deletion
     - [x] 1.6.4 Implement complete data removal from all storage systems
     - [x] 1.6.5 Add security measures and audit logging for deletions
-  - [ ] 1.7 Add authentication tests (unit/integration)
+  - [x] 1.7 Add authentication tests (unit/integration)
+    - [x] 1.7.1 Add tests for user registration and email verification APIs
+    - [x] 1.7.2 Add tests for login and logout functionality
+    - [x] 1.7.3 Add tests for password reset flow
+    - [x] 1.7.4 Add tests for onboarding flow and preferences
+    - [x] 1.7.5 Add tests for account deletion and security measures
+    - [x] 1.7.6 Add integration tests for complete authentication flows
 
 - [ ] 2.0 Content Source Management & Integration
   - [ ] 2.1 Design UI for adding/editing/removing content sources

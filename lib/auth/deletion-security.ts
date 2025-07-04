@@ -104,6 +104,10 @@ export class DeletionSecurityService {
       if (recentAttempts.length >= DELETION_SECURITY_CONFIG.MAX_DELETION_ATTEMPTS) {
         securityFlags.push('rate_limit_exceeded');
         riskLevel = 'high';
+        
+        // Log security check before returning
+        await this.logSecurityCheck(options, securityFlags, riskLevel);
+        
         return {
           allowed: false,
           reason: 'Too many deletion attempts. Please wait before trying again.',
@@ -120,6 +124,10 @@ export class DeletionSecurityService {
       securityFlags.push('ip_rate_limit_exceeded');
       riskLevel = 'high';
       this.blockedIPs.add(options.ip);
+      
+      // Log security check before returning
+      await this.logSecurityCheck(options, securityFlags, riskLevel);
+      
       return {
         allowed: false,
         reason: 'Too many deletions from this IP address.',
@@ -133,6 +141,10 @@ export class DeletionSecurityService {
     if (this.blockedIPs.has(options.ip)) {
       securityFlags.push('blocked_ip');
       riskLevel = 'high';
+      
+      // Log security check before returning
+      await this.logSecurityCheck(options, securityFlags, riskLevel);
+      
       return {
         allowed: false,
         reason: 'Access blocked from this IP address.',

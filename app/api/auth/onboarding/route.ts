@@ -148,7 +148,6 @@ export async function GET(request: NextRequest) {
 
     // Get user onboarding data
     const onboardingData = onboardingPreferences.get(session.email);
-    const user = users.get(session.email);
 
     if (!onboardingData) {
       return NextResponse.json(

@@ -4,7 +4,8 @@ import {
   pendingVerifications, 
   passwordResets, 
   resendAttempts, 
-  resetAttempts 
+  resetAttempts,
+  onboardingPreferences 
 } from '@/lib/stores/verification-store';
 
 // Types for data removal operations
@@ -254,21 +255,19 @@ export class DataRemovalService {
   }
 
   /**
-   * Remove user preferences (placeholder for future implementation)
+   * Remove user preferences including onboarding preferences
    */
   private async removeUserPreferences(email: string, result: DataRemovalResult): Promise<void> {
     try {
-      // TODO: Implement when user preferences are added
-      // This would remove:
-      // - Content source preferences
-      // - Time limit settings
-      // - Notification preferences
-      // - UI/UX preferences
-      // - Privacy settings
-      
-      // Set to false until implemented
-      result.removedData.userPreferences = false;
-      console.log(`- User preferences removal not implemented for: ${email}`);
+      const onboardingExists = onboardingPreferences.has(email);
+      if (onboardingExists) {
+        onboardingPreferences.delete(email);
+        result.removedData.userPreferences = true;
+        console.log(`✓ User preferences removed for: ${email}`);
+      } else {
+        result.removedData.userPreferences = false;
+        console.log(`! User preferences not found for: ${email}`);
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       result.errors.push(`Failed to remove user preferences: ${errorMessage}`);
