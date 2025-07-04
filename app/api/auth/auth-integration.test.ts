@@ -355,7 +355,7 @@ describe('Authentication Integration Tests', () => {
     it('should handle onboarding with invalid preferences', async () => {
       const invalidPreferences = {
         interests: ['invalid_interest'],
-        sessionDuration: 5, // Too short
+        defaultSessionDuration: 5, // Too short
         dailyTimeLimit: 10, // Too short
         maxSessionsPerDay: 15 // Too many
       };
