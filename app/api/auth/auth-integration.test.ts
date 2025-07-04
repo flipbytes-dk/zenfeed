@@ -377,7 +377,6 @@ describe('Authentication Integration Tests', () => {
       users.set(testEmail, {
         email: testEmail,
         passwordHash: hashedPassword,
-        name: testName,
         verified: true,
         createdAt: new Date(),
         onboardingCompleted: true
@@ -386,17 +385,18 @@ describe('Authentication Integration Tests', () => {
       const sessionId = 'session_' + Date.now();
       sessions.set(sessionId, {
         userId: testEmail,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-        ip: '127.0.0.1',
-        userAgent: 'Mozilla/5.0 Test'
+        email: testEmail,
+        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        createdAt: new Date()
       });
 
       onboardingPreferences.set(testEmail, {
+        email: testEmail,
         interests: ['technology', 'science'],
-        sessionDuration: 30,
+        defaultSessionDuration: 30,
         dailyTimeLimit: 120,
-        maxSessionsPerDay: 3
+        maxSessionsPerDay: 3,
+        completedAt: new Date()
       });
 
       mockGetAuthenticatedUser.mockResolvedValue({
