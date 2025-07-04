@@ -20,12 +20,23 @@ export interface UserData {
   passwordHash: string;
   verified: boolean;
   createdAt: Date;
+  onboardingCompleted?: boolean;
+}
+
+export interface OnboardingData {
+  email: string;
+  interests: string[];
+  defaultSessionDuration: number; // in minutes
+  dailyTimeLimit: number; // in minutes, -1 for unlimited
+  maxSessionsPerDay: number;
+  completedAt: Date;
 }
 
 // In-memory stores for demonstration
 export const pendingVerifications = new Map<string, VerificationData>();
 export const users = new Map<string, UserData>();
 export const passwordResets = new Map<string, PasswordResetData>();
+export const onboardingPreferences = new Map<string, OnboardingData>();
 
 // Rate limiting store for resend attempts
 export const resendAttempts = new Map<string, { count: number; lastAttempt: Date }>();

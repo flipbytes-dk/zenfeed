@@ -1,17 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { handlePostAuthRedirect } from '@/lib/auth/utils';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [verificationSuccess, setVerificationSuccess] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('verified') === 'true') {
+      setVerificationSuccess(true);
+      // Clear the URL parameter
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('verified');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +57,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Login successful - redirect to dashboard or home
-        router.push('/dashboard');
+        // Login successful - check onboarding status and redirect appropriately
+        await handlePostAuthRedirect(router);
       } else {
         // Map specific error codes to user-friendly messages
         const errorMessages: Record<string, string> = {
@@ -84,6 +97,12 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
+            {verificationSuccess && (
+              <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">
+                ✓ Email verified successfully! You can now log in to your account.
+              </div>
+            )}
+            
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
                 {error}

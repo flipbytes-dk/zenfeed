@@ -1,18 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { handlePostAuthRedirect } from '@/lib/auth/utils';
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const token = searchParams.get('token');
   const email = searchParams.get('email');
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading');
   const [message, setMessage] = useState('');
   const [isResending, setIsResending] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (!token || !email) {
@@ -82,6 +85,18 @@ export default function VerifyEmailPage() {
     }
   };
 
+  const handleContinueToApp = async () => {
+    setIsRedirecting(true);
+    try {
+      // Since user just verified email, they need to login first
+      // We'll redirect to login and then let login handle onboarding check
+      router.push('/auth/login?verified=true');
+    } catch (error) {
+      console.error('Redirect error:', error);
+      router.push('/auth/login');
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full space-y-8">
@@ -103,9 +118,13 @@ export default function VerifyEmailPage() {
             <div className="text-center">
               <div className="text-green-600 text-5xl mb-4" aria-label="Success">✓</div>
               <p className="text-green-600 font-medium mb-4">{message}</p>
-              <Link href="/auth/login">
-                <Button className="w-full">Continue to Login</Button>
-              </Link>
+              <Button 
+                className="w-full" 
+                onClick={handleContinueToApp}
+                disabled={isRedirecting}
+              >
+                {isRedirecting ? 'Redirecting...' : 'Continue to Login'}
+              </Button>
             </div>
           )}
           

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { checkOnboardingStatus } from '@/lib/auth/utils';
 
 interface UserSession {
   email: string;
@@ -32,6 +33,13 @@ export default function DashboardPage() {
         
         const data = await response.json();
         setUser(data.user);
+        
+        // Check if user needs to complete onboarding
+        const { needsOnboarding, error } = await checkOnboardingStatus();
+        if (needsOnboarding && !error) {
+          router.push('/auth/onboarding');
+          return;
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
         router.push('/auth/login');
