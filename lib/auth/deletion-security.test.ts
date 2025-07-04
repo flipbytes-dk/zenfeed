@@ -22,7 +22,6 @@ describe('DeletionSecurityService', () => {
         email: testEmail,
         ip: testIP,
         userAgent: testUserAgent,
-        password: 'validPassword123',
         accountAge: 30 * 24 * 60 * 60 * 1000 // 30 days
       });
 
@@ -137,7 +136,7 @@ describe('DeletionSecurityService', () => {
 
       expect(result.allowed).toBe(false);
       expect(result.riskLevel).toBe('high');
-      expect(result.reason).toContain('rapid_requests');
+      expect(result.reason).toContain('Too many deletion attempts');
     });
   });
 
