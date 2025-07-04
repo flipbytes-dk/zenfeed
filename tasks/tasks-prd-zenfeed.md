@@ -78,7 +78,7 @@
     - [x] 1.6.5 Add security measures and audit logging for deletions
   - [ ] 1.7 Add authentication tests (unit/integration)
     - [x] 1.7.1 Add tests for user registration and email verification APIs
-    - [ ] 1.7.2 Add tests for login and logout functionality
+    - [x] 1.7.2 Add tests for login and logout functionality
     - [ ] 1.7.3 Add tests for password reset flow
     - [ ] 1.7.4 Add tests for onboarding flow and preferences
     - [ ] 1.7.5 Add tests for account deletion and security measures
