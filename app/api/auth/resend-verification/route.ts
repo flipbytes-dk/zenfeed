@@ -32,8 +32,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email format is valid
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email) || 
+        email.includes('..') || 
+        email.startsWith('.') || 
+        email.endsWith('.') ||
+        email.includes(' ')) {
       return NextResponse.json(
         { error: 'invalid_email', message: 'Invalid email format' },
         { status: 400 }
@@ -52,6 +56,11 @@ export async function POST(request: NextRequest) {
           { error: 'rate_limited', message: 'Too many resend attempts. Please try again later.' },
           { status: 429 }
         );
+      }
+      
+      // Reset attempts if window has expired
+      if (timeSinceFirst >= RESEND_WINDOW_MS) {
+        resendAttempts.delete(attemptKey);
       }
     }
 
@@ -89,8 +98,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Update attempts counter
+    const currentAttempts = resendAttempts.get(attemptKey);
     resendAttempts.set(attemptKey, {
-      count: (attempts?.count || 0) + 1,
+      count: (currentAttempts?.count || 0) + 1,
       lastAttempt: now,
     });
 

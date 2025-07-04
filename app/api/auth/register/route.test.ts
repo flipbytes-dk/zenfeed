@@ -106,6 +106,28 @@ describe('/api/auth/register', () => {
       expect(data.message).toBe('Email and password are required');
     });
 
+    it('should reject registration with empty email', async () => {
+      const requestBody = {
+        email: '',
+        password: 'password123'
+      };
+
+      const request = new NextRequest('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toBe('missing_fields');
+      expect(data.message).toBe('Email and password are required');
+    });
+
     it('should reject registration with invalid email format', async () => {
       const requestBody = {
         email: 'invalid-email',
@@ -222,8 +244,7 @@ describe('/api/auth/register', () => {
         'user@.com',
         'user..name@example.com',
         'user@example.',
-        'user name@example.com',
-        ''
+        'user name@example.com'
       ];
 
       for (const email of invalidEmails) {

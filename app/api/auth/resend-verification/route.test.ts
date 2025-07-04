@@ -84,6 +84,25 @@ describe('/api/auth/resend-verification', () => {
       expect(data.message).toBe('Email is required');
     });
 
+    it('should reject resend with empty email', async () => {
+      const requestBody = { email: '' };
+
+      const request = new NextRequest('http://localhost:3000/api/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const response = await POST(request);
+      const data = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(data.error).toBe('missing_email');
+      expect(data.message).toBe('Email is required');
+    });
+
     it('should reject resend with invalid email format', async () => {
       const invalidEmails = [
         'invalid-email',
@@ -92,8 +111,7 @@ describe('/api/auth/resend-verification', () => {
         'user@.com',
         'user..name@example.com',
         'user@example.',
-        'user name@example.com',
-        ''
+        'user name@example.com'
       ];
 
       for (const email of invalidEmails) {
@@ -224,6 +242,9 @@ describe('/api/auth/resend-verification', () => {
         expires: oldExpires,
         verified: false
       });
+
+      // Add small delay to ensure new expiration time is later
+      await new Promise(resolve => setTimeout(resolve, 10));
 
       const requestBody = { email };
 
