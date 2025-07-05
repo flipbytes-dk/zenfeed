@@ -87,7 +87,7 @@
 
 - [ ] 2.0 Content Source Management & Integration
   - [x] 2.1 Design UI for adding/editing/removing content sources
-  - [ ] 2.2 Implement search and selection of predefined categories/topics
+  - [x] 2.2 Implement search and selection of predefined categories/topics
   - [ ] 2.3 Implement input for usernames/channels and RSS/newsletter URLs
   - [ ] 2.4 Integrate with YouTube, Instagram, X/Twitter, RSS, Substack APIs
   - [ ] 2.5 Implement social account connection/import
