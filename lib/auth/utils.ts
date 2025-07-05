@@ -114,7 +114,7 @@ export async function checkOnboardingStatus(): Promise<{ needsOnboarding: boolea
     }
 
     const data = await response.json();
-    return { needsOnboarding: !data.onboardingCompleted };
+    return { needsOnboarding: !data.completed };
   } catch (error) {
     console.error('Error checking onboarding status:', error);
     return { needsOnboarding: true, error: 'Network error' };

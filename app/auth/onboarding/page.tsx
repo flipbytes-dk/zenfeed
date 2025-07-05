@@ -7,21 +7,24 @@ import { Input } from '@/components/ui/input';
 
 // Onboarding step components (to be implemented in subsequent sub-tasks)
 const WelcomeStep = ({ onNext }: { onNext: () => void }) => (
-  <div className="text-center space-y-6">
-    <div className="space-y-4">
-      <h1 className="text-4xl font-bold text-gray-900">
+  <div className="text-center space-y-8">
+    <div className="space-y-6">
+      <h1 className="text-5xl sm:text-6xl font-mono font-extrabold text-gray-900 tracking-tight">
         Welcome to ZenFeed!
       </h1>
-      <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+      <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
         Let's set up your personalized content experience in just a few steps.
       </p>
-      <p className="text-lg text-gray-500">
+      <p className="text-lg text-gray-500 max-w-xl mx-auto">
         We'll help you choose your interests and set healthy time limits for mindful content consumption.
       </p>
     </div>
-    <Button onClick={onNext} size="lg" className="px-8">
+    <button 
+      onClick={onNext}
+      className="px-8 py-3 bg-gray-900 hover:bg-[#2563eb] text-white font-mono font-semibold text-lg rounded shadow transition-colors"
+    >
       Get Started
-    </Button>
+    </button>
   </div>
 );
 
@@ -149,16 +152,16 @@ const InterestsStep = ({
   const isSelected = (interestId: string) => selectedInterests.includes(interestId);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold text-gray-900">
+        <h2 className="text-4xl font-mono font-extrabold text-gray-900 tracking-tight">
           What interests you?
         </h2>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Select 3-15 topics you'd like to see in your curated content sessions.
         </p>
-        <p className="text-sm text-gray-500">
-          Selected: {selectedInterests.length} interests
+        <p className="text-sm text-gray-500 font-mono">
+          Selected: <span className="font-semibold text-[#0e7490]">{selectedInterests.length}</span> interests
           {selectedInterests.length >= 15 && (
             <span className="text-amber-600 font-medium"> (Maximum reached)</span>
           )}
@@ -360,17 +363,17 @@ const TimeLimitsStep = ({
   return (
     <div className="space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold text-gray-900">
+        <h2 className="text-4xl font-mono font-extrabold text-gray-900 tracking-tight">
           Set your time preferences
         </h2>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Choose how long you'd like your content sessions to last and set healthy daily limits.
         </p>
       </div>
 
       {/* Default Session Duration */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-gray-900">Default Session Duration</h3>
+        <h3 className="text-xl font-mono font-bold text-gray-900">Default Session Duration</h3>
         <p className="text-sm text-gray-600">
           How long should your typical content session last? (15 minutes - 4 hours)
         </p>
@@ -425,7 +428,7 @@ const TimeLimitsStep = ({
 
       {/* Daily Time Limit */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-gray-900">Daily Time Limit</h3>
+        <h3 className="text-xl font-mono font-bold text-gray-900">Daily Time Limit</h3>
         <p className="text-sm text-gray-600">
           Set a healthy daily limit for your total content consumption.
         </p>
@@ -450,7 +453,7 @@ const TimeLimitsStep = ({
 
       {/* Sessions Per Day */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold text-gray-900">Sessions Per Day</h3>
+        <h3 className="text-xl font-mono font-bold text-gray-900">Sessions Per Day</h3>
         <p className="text-sm text-gray-600">
           How many separate content sessions would you like per day?
         </p>
@@ -657,18 +660,18 @@ export default function OnboardingPage() {
   const CurrentStepComponent = STEPS[currentStep].component;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         {/* Progress indicator */}
         <div className="mb-12">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-6">
             {STEPS.map((step, index) => (
               <div key={step.id} className="flex items-center">
                 <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full text-sm font-medium ${
+                  className={`flex items-center justify-center w-12 h-12 rounded-full text-sm font-mono font-bold ${
                     index <= currentStep
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-300 text-gray-500'
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-200 text-gray-500'
                   }`}
                 >
                   {index + 1}
@@ -676,7 +679,7 @@ export default function OnboardingPage() {
                 {index < STEPS.length - 1 && (
                   <div
                     className={`w-full h-1 mx-4 ${
-                      index < currentStep ? 'bg-indigo-600' : 'bg-gray-300'
+                      index < currentStep ? 'bg-gray-900' : 'bg-gray-200'
                     }`}
                   />
                 )}
@@ -684,16 +687,16 @@ export default function OnboardingPage() {
             ))}
           </div>
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 font-mono">
               Step {currentStep + 1} of {STEPS.length}: {STEPS[currentStep].title}
             </p>
           </div>
         </div>
 
         {/* Main content area */}
-        <div className="bg-white rounded-xl shadow-lg p-8 md:p-12">
+        <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-100 p-8 md:p-12">
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+            <div className="mb-8 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
               {error}
             </div>
           )}
@@ -704,7 +707,7 @@ export default function OnboardingPage() {
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-500">
             Need help? Contact us at{' '}
-            <a href="mailto:support@zenfeed.com" className="text-indigo-600 hover:underline">
+            <a href="mailto:support@zenfeed.com" className="text-[#0e7490] hover:underline">
               support@zenfeed.com
             </a>
           </p>

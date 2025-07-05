@@ -89,9 +89,6 @@ export default function ContentSourcesPage() {
   const [sources, setSources] = useState<ContentSource[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingSource, setEditingSource] = useState<ContentSource | null>(null);
-  const router = useRouter();
-
-  // Form state
   const [formData, setFormData] = useState({
     type: 'youtube' as ContentSource['type'],
     name: '',
@@ -100,52 +97,42 @@ export default function ContentSourcesPage() {
     priority: 'medium' as ContentSource['priority'],
     description: '',
   });
+  const [formError, setFormError] = useState<string | null>(null);
+  const [formLoading, setFormLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const router = useRouter();
 
+  // Fetch user and content sources from API
   useEffect(() => {
-    const checkAuth = async () => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setApiError(null);
       try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        
-        if (!response.ok) {
+        // Fetch user info
+        const userRes = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!userRes.ok) {
           router.push('/auth/login');
           return;
         }
-        
-        const data = await response.json();
-        setUser(data.user);
-        
-        // Load existing content sources (mock data for now)
-        setSources([
-          {
-            id: '1',
-            type: 'youtube',
-            name: 'TechCrunch',
-            url: 'https://youtube.com/@TechCrunch',
-            priority: 'high',
-            active: true,
-            description: 'Latest tech news and startup coverage',
-          },
-          {
-            id: '2',
-            type: 'category',
-            name: 'Science',
-            priority: 'medium',
-            active: true,
-            description: 'Scientific discoveries and research',
-          },
-        ]);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        router.push('/auth/login');
+        const userData = await userRes.json();
+        setUser(userData.user);
+        // Fetch content sources
+        const sourcesRes = await fetch('/api/content-sources', { credentials: 'include' });
+        if (!sourcesRes.ok) {
+          setApiError('Failed to load content sources.');
+          setSources([]);
+        } else {
+          const sourcesData = await sourcesRes.json();
+          setSources(sourcesData);
+        }
+      } catch (err) {
+        setApiError('Network error loading content sources.');
+        setSources([]);
       } finally {
         setIsLoading(false);
       }
     };
-
-    checkAuth();
+    fetchData();
   }, [router]);
 
   const handleLogout = async () => {
@@ -175,6 +162,7 @@ export default function ContentSourcesPage() {
       priority: 'medium',
       description: '',
     });
+    setFormError(null);
   };
 
   const handleEditSource = (source: ContentSource) => {
@@ -188,56 +176,138 @@ export default function ContentSourcesPage() {
       priority: source.priority,
       description: source.description || '',
     });
+    setFormError(null);
   };
 
-  const handleDeleteSource = (sourceId: string) => {
-    if (confirm('Are you sure you want to remove this content source?')) {
-      setSources(sources.filter(s => s.id !== sourceId));
+  const handleDeleteSource = async (sourceId: string) => {
+    if (!confirm('Are you sure you want to remove this content source?')) return;
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      const res = await fetch('/api/content-sources', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: sourceId }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setApiError('Failed to delete content source.');
+      } else {
+        setSources(sources.filter(s => s.id !== sourceId));
+      }
+    } catch (err) {
+      setApiError('Network error deleting content source.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleToggleActive = (sourceId: string) => {
-    setSources(sources.map(s => 
-      s.id === sourceId ? { ...s, active: !s.active } : s
-    ));
+  const handleToggleActive = async (sourceId: string) => {
+    const source = sources.find(s => s.id === sourceId);
+    if (!source) return;
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      const res = await fetch('/api/content-sources', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...source, active: !source.active }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setApiError('Failed to update content source.');
+      } else {
+        const updated = await res.json();
+        setSources(sources.map(s => s.id === sourceId ? updated : s));
+      }
+    } catch (err) {
+      setApiError('Network error updating content source.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSubmitForm = (e: React.FormEvent) => {
+  const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (editingSource) {
-      // Update existing source
-      setSources(sources.map(s => 
-        s.id === editingSource.id 
-          ? { ...s, ...formData }
-          : s
-      ));
-    } else {
-      // Add new source
-      const newSource: ContentSource = {
-        id: Date.now().toString(),
-        ...formData,
-        active: true,
-      };
-      setSources([...sources, newSource]);
+    setFormError(null);
+    setFormLoading(true);
+    // Basic validation
+    if (!formData.name.trim()) {
+      setFormError('Name is required.');
+      setFormLoading(false);
+      return;
     }
-    
-    setShowAddForm(false);
-    setEditingSource(null);
+    if (!formData.type) {
+      setFormError('Source type is required.');
+      setFormLoading(false);
+      return;
+    }
+    // Optionally add more validation here (e.g., URL format)
+    try {
+      let res;
+      if (editingSource) {
+        res = await fetch('/api/content-sources', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...editingSource, ...formData }),
+          credentials: 'include',
+        });
+      } else {
+        res = await fetch('/api/content-sources', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+          credentials: 'include',
+        });
+      }
+      if (!res.ok) {
+        const errData = await res.json();
+        setFormError(errData.error || 'Failed to save content source.');
+      } else {
+        const saved = await res.json();
+        if (editingSource) {
+          setSources(sources.map(s => s.id === saved.id ? saved : s));
+        } else {
+          setSources([...sources, saved]);
+        }
+        setShowAddForm(false);
+        setEditingSource(null);
+      }
+    } catch (err) {
+      setFormError('Network error saving content source.');
+    } finally {
+      setFormLoading(false);
+    }
   };
 
-  const handleAddCategory = (categoryId: string) => {
+  const handleAddCategory = async (categoryId: string) => {
     const category = PREDEFINED_CATEGORIES.find(c => c.id === categoryId);
-    if (category && !sources.some(s => s.type === 'category' && s.name === category.name)) {
-      const newSource: ContentSource = {
-        id: Date.now().toString(),
-        type: 'category',
-        name: category.name,
-        priority: 'medium',
-        active: true,
-        description: category.description,
-      };
-      setSources([...sources, newSource]);
+    if (!category || sources.some(s => s.type === 'category' && s.name === category.name)) return;
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      const res = await fetch('/api/content-sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'category',
+          name: category.name,
+          priority: 'medium',
+          active: true,
+          description: category.description,
+        }),
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        setApiError('Failed to add category.');
+      } else {
+        const saved = await res.json();
+        setSources([...sources, saved]);
+      }
+    } catch (err) {
+      setApiError('Network error adding category.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

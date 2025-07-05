@@ -14,17 +14,45 @@ function generateResetToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-// Helper function to send password reset email (mock implementation)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function sendPasswordResetEmail(email: string, _token: string): Promise<boolean> {
-  // TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
-  console.log(`Sending password reset email to: ${email}`);
-  console.log(`Password reset requested for email: ${email} at ${new Date().toISOString()}`);
-  
-  // Simulate email sending
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(true), 100);
-  });
+// Helper function to send password reset email using Resend
+async function sendPasswordResetEmail(email: string, token: string): Promise<boolean> {
+  try {
+    const { Resend } = await import('resend');
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/reset-password/confirm?token=${token}&email=${encodeURIComponent(email)}`;
+    
+    const fromEmail = process.env.FROM_EMAIL || 'ZenFeed <onboarding@resend.dev>';
+    
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: [email],
+      subject: 'Reset your ZenFeed password',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Password Reset Request</h2>
+          <p>You requested to reset your password for your ZenFeed account.</p>
+          <p>Click the link below to set a new password:</p>
+          <a href="${resetLink}" style="display: inline-block; background-color: #dc3545; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Reset Password</a>
+          <p>Or copy and paste this link in your browser:</p>
+          <p style="word-break: break-all; color: #666;">${resetLink}</p>
+          <p>This link will expire in 1 hour for security reasons.</p>
+          <p>If you didn't request this password reset, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send password reset email:', error);
+      return false;
+    }
+
+    console.log('Password reset email sent successfully:', data);
+    return true;
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    return false;
+  }
 }
 
 // Helper function to check rate limiting

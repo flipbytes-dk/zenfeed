@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { timingSafeEqual } from 'crypto';
-import { pendingVerifications } from '@/lib/stores/verification-store';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
     const { token, email } = await request.json();
+    
+    console.log('Email verification attempt:', { email, tokenLength: token?.length });
 
     if (!token || !email) {
       return NextResponse.json(
@@ -30,8 +33,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Replace with database lookup
-    const verification = pendingVerifications.get(email);
+    // Look up user by email
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json(
+        { error: 'not_found', message: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Look up verification token
+    const verification = await prisma.verificationToken.findFirst({
+      where: {
+        userId: user.id,
+        token,
+      },
+    });
 
     if (!verification) {
       return NextResponse.json(
@@ -40,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (verification.verified) {
+    if (verification.used) {
       return NextResponse.json(
         { error: 'already_verified', message: 'Email already verified' },
         { status: 400 }
@@ -54,23 +71,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use constant-time comparison to prevent timing attacks
-    if (!timingSafeEqual(Buffer.from(verification.token), Buffer.from(token))) {
-      return NextResponse.json(
-        { error: 'invalid_token', message: 'Invalid verification token' },
-        { status: 400 }
-      );
-    }
-
-    // Mark as verified
-    verification.verified = true;
-    pendingVerifications.set(email, verification);
-
-    // TODO: Update user status in database
-    console.log(`Email verified for: ${email}`);
+    // Mark user as verified and token as used
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { verified: true },
+    });
+    await prisma.verificationToken.update({
+      where: { id: verification.id },
+      data: { used: true },
+    });
 
     return NextResponse.json(
-      { message: 'Email verified successfully' },
+      { success: true, message: 'Email verified successfully' },
       { status: 200 }
     );
 

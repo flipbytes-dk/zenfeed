@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/auth/utils';
-import { users } from '@/lib/stores/verification-store';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,8 +16,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get user data from store
-    const user = users.get(session.email);
+    // Get user data from database
+    const user = await prisma.user.findUnique({ where: { email: session.email } });
     
     if (!user) {
       return NextResponse.json(
@@ -28,6 +30,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         user: {
+          id: user.id,
           email: user.email,
           verified: user.verified,
           createdAt: user.createdAt,

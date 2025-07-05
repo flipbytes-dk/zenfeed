@@ -1,26 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { users, sessions, SESSION_EXPIRY_MS } from '@/lib/stores/verification-store';
+import { PrismaClient } from '@/lib/generated/prisma';
+import { sessions } from '@/lib/stores/verification-store';
+
+const prisma = new PrismaClient();
+const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 // Helper function to generate session token
 function generateSessionToken(): string {
   return crypto.randomBytes(32).toString('hex');
-}
-
-// Helper function to create session
-function createSession(email: string): string {
-  const sessionToken = generateSessionToken();
-  const expires = new Date(Date.now() + SESSION_EXPIRY_MS);
-
-  sessions.set(sessionToken, {
-    userId: email, // Using email as userId for now
-    email,
-    expires,
-    createdAt: new Date(),
-  });
-
-  return sessionToken;
 }
 
 export async function POST(request: NextRequest) {
@@ -48,8 +37,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user exists
-    const user = users.get(email);
+    // Check if user exists in database
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return NextResponse.json(
         { error: 'user_not_found', message: 'No account found with this email address' },
@@ -74,14 +63,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create session
-    const sessionToken = createSession(email);
+    // Create session token
+    const sessionToken = generateSessionToken();
+    const sessionExpiry = new Date(Date.now() + SESSION_EXPIRY_MS);
+
+    // Store session in memory for auth utils
+    sessions.set(sessionToken, {
+      userId: user.id,
+      email: user.email,
+      expires: sessionExpiry,
+      createdAt: new Date(),
+    });
 
     // Create response with session cookie
     const response = NextResponse.json(
       {
         message: 'Login successful',
         user: {
+          id: user.id,
           email: user.email,
           verified: user.verified,
           createdAt: user.createdAt,
