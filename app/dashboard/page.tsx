@@ -124,6 +124,47 @@ export default function DashboardPage() {
                 more features will be added as we continue building the application.
               </p>
               
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <Link href="/dashboard/content-sources">
+                  <div className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <div className="text-2xl">📚</div>
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="text-lg font-medium text-gray-900">Content Sources</h3>
+                        <p className="text-sm text-gray-600">Manage your feeds and interests</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+                
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 opacity-75">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="text-2xl">⏰</div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-600">Time Management</h3>
+                      <p className="text-sm text-gray-500">Coming soon</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 opacity-75">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <div className="text-2xl">📊</div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-medium text-gray-600">Analytics</h3>
+                      <p className="text-sm text-gray-500">Coming soon</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
                 <div className="flex">
                   <div className="flex-shrink-0">
@@ -133,12 +174,13 @@ export default function DashboardPage() {
                   </div>
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-blue-800">
-                      Coming Soon
+                      Get Started
                     </h3>
                     <div className="mt-2 text-sm text-blue-700">
                       <p>
-                        We&apos;re working on content curation, time management, analytics, 
-                        and other exciting features to help you consume social media mindfully.
+                        Start by adding your content sources to create a personalized feed. 
+                        We&apos;ll help you consume social media mindfully with time management 
+                        and curated content.
                       </p>
                     </div>
                   </div>

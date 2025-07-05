@@ -49,6 +49,7 @@
 - `lib/stores/verification-store.ts` - Updated shared store with session management, password reset tokens, and onboarding preferences.
 - `app/auth/onboarding/page.tsx` - Multi-step onboarding flow for user preferences and initial setup with data submission.
 - `app/api/auth/onboarding/route.ts` - API endpoint for storing and retrieving user onboarding preferences.
+- `app/dashboard/content-sources/page.tsx` - Content sources management page for adding/editing/removing content sources with UI for various source types.
 - `components/ui/button.tsx` - shadcn/ui Button component.
 - `components/ui/input.tsx` - shadcn/ui Input component.
 
@@ -85,7 +86,7 @@
     - [x] 1.7.6 Add integration tests for complete authentication flows
 
 - [ ] 2.0 Content Source Management & Integration
-  - [ ] 2.1 Design UI for adding/editing/removing content sources
+  - [x] 2.1 Design UI for adding/editing/removing content sources
   - [ ] 2.2 Implement search and selection of predefined categories/topics
   - [ ] 2.3 Implement input for usernames/channels and RSS/newsletter URLs
   - [ ] 2.4 Integrate with YouTube, Instagram, X/Twitter, RSS, Substack APIs
