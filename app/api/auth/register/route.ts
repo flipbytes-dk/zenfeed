@@ -15,10 +15,6 @@ async function sendVerificationEmail(email: string, token: string): Promise<bool
   try {
     const { Resend } = await import('resend');
     
-    // Debug: Check if API key is loaded
-    console.log('RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
-    console.log('RESEND_API_KEY starts with re_:', process.env.RESEND_API_KEY?.startsWith('re_'));
-    
     if (!process.env.RESEND_API_KEY) {
       console.error('RESEND_API_KEY is not set in environment variables');
       return false;

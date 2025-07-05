@@ -71,15 +71,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mark user as verified and token as used
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { verified: true },
-    });
-    await prisma.verificationToken.update({
-      where: { id: verification.id },
-      data: { used: true },
-    });
+    // Mark user as verified and token as used atomically
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { verified: true },
+      }),
+      prisma.verificationToken.update({
+        where: { id: verification.id },
+        data: { used: true },
+      }),
+    ]);
 
     return NextResponse.json(
       { success: true, message: 'Email verified successfully' },

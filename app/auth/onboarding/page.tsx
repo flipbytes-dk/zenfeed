@@ -21,6 +21,8 @@ const WelcomeStep = ({ onNext }: { onNext: () => void }) => (
     </div>
     <button 
       onClick={onNext}
+      type="button"
+      aria-label="Start the onboarding process"
       className="px-8 py-3 bg-gray-900 hover:bg-[#2563eb] text-white font-mono font-semibold text-lg rounded shadow transition-colors"
     >
       Get Started

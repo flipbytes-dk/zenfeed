@@ -1,10 +1,17 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-white">
       <main className="flex flex-col items-center justify-center flex-1 px-4 py-12">
-        <img src="/logo.png" alt="ZenFeed Logo" className="w-32 h-32 mb-6" />
+        <Image
+          src="/logo.png"
+          alt="ZenFeed Logo"
+          width={128}
+          height={128}
+          className="mb-6"
+        />
         <h1 className="text-5xl sm:text-6xl font-mono font-extrabold text-center mb-4 text-gray-900 tracking-tight">
           Mindful Media, <br className="sm:hidden" />
           Focused Life
