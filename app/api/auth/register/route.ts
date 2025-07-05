@@ -1,23 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import { users, pendingVerifications, TOKEN_EXPIRY_MS } from '@/lib/stores/verification-store';
+import { PrismaClient } from '@/lib/generated/prisma';
+
+const prisma = new PrismaClient();
 
 // Helper function to generate verification token
 function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-// Helper function to send verification email (mock implementation)
+// Helper function to send verification email using Resend
 async function sendVerificationEmail(email: string, token: string): Promise<boolean> {
-  // TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
-  console.log(`Sending verification email to: ${email}`);
-  console.log(`Verification link: ${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`);
-  
-  // Simulate email sending
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(true), 100);
-  });
+  try {
+    const { Resend } = await import('resend');
+    
+    if (!process.env.RESEND_API_KEY) {
+      console.error('RESEND_API_KEY is not set in environment variables');
+      return false;
+    }
+    
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    
+    const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/auth/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+    
+    const fromEmail = process.env.FROM_EMAIL || 'ZenFeed <onboarding@resend.dev>';
+    
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: [email],
+      subject: 'Verify your ZenFeed account',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Welcome to ZenFeed!</h2>
+          <p>Please click the link below to verify your email address and activate your account:</p>
+          <a href="${verificationLink}" style="display: inline-block; background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; margin: 20px 0;">Verify Email</a>
+          <p>Or copy and paste this link in your browser:</p>
+          <p style="word-break: break-all; color: #666;">${verificationLink}</p>
+          <p>This link will expire in 24 hours.</p>
+          <p>If you didn't create this account, please ignore this email.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error('Failed to send verification email:', error);
+      return false;
+    }
+
+    console.log('Verification email sent successfully:', data);
+    return true;
+  } catch (error) {
+    console.error('Error sending verification email:', error);
+    return false;
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -53,8 +89,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    if (users.has(email)) {
+    // Check if user already exists in database
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
       return NextResponse.json(
         { error: 'user_exists', message: 'User already exists with this email' },
         { status: 409 }
@@ -65,24 +102,27 @@ export async function POST(request: NextRequest) {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user (unverified)
-    users.set(email, {
-      email,
-      passwordHash,
-      verified: false,
-      createdAt: new Date(),
+    // Create user (unverified) in database
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        verified: false,
+      },
     });
 
     // Generate verification token
     const token = generateVerificationToken();
-    const expires = new Date(Date.now() + TOKEN_EXPIRY_MS);
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Store verification request
-    pendingVerifications.set(email, {
-      email,
-      token,
-      expires,
-      verified: false,
+    // Store verification token in database
+    await prisma.verificationToken.create({
+      data: {
+        token,
+        userId: user.id,
+        expires,
+        used: false,
+      },
     });
 
     // Send verification email
@@ -90,9 +130,8 @@ export async function POST(request: NextRequest) {
 
     if (!emailSent) {
       // Clean up user if email failed
-      users.delete(email);
-      pendingVerifications.delete(email);
-      
+      await prisma.verificationToken.deleteMany({ where: { userId: user.id } });
+      await prisma.user.delete({ where: { id: user.id } });
       return NextResponse.json(
         { error: 'email_failed', message: 'Failed to send verification email' },
         { status: 500 }

@@ -1,16 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessions } from '@/lib/stores/verification-store';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get session token from cookies
-    const sessionToken = request.cookies.get('session')?.value;
-
-    if (sessionToken) {
-      // Remove session from server store
-      sessions.delete(sessionToken);
-    }
-
     // Create response
     const response = NextResponse.json(
       { message: 'Logout successful' },
