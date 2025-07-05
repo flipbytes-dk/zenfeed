@@ -25,18 +25,26 @@ interface UserSession {
 
 // Predefined categories/topics
 const PREDEFINED_CATEGORIES = [
-  { id: 'technology', name: 'Technology', description: 'Latest tech news and innovations' },
-  { id: 'business', name: 'Business', description: 'Business news and insights' },
-  { id: 'science', name: 'Science', description: 'Scientific discoveries and research' },
-  { id: 'health', name: 'Health & Wellness', description: 'Health tips and medical news' },
+  { id: 'technology', name: 'Technology', description: 'Latest tech news, gadgets, and innovations' },
+  { id: 'business', name: 'Business', description: 'Business news, entrepreneurship, and insights' },
+  { id: 'science', name: 'Science', description: 'Scientific discoveries, research, and breakthroughs' },
+  { id: 'health', name: 'Health & Wellness', description: 'Health tips, fitness, and medical news' },
   { id: 'education', name: 'Education', description: 'Learning resources and educational content' },
   { id: 'entertainment', name: 'Entertainment', description: 'Movies, TV shows, and pop culture' },
-  { id: 'sports', name: 'Sports', description: 'Sports news and highlights' },
-  { id: 'politics', name: 'Politics', description: 'Political news and analysis' },
-  { id: 'finance', name: 'Finance', description: 'Financial markets and investment news' },
-  { id: 'lifestyle', name: 'Lifestyle', description: 'Lifestyle tips and trends' },
-  { id: 'travel', name: 'Travel', description: 'Travel guides and destination content' },
-  { id: 'food', name: 'Food & Cooking', description: 'Recipes and culinary content' },
+  { id: 'sports', name: 'Sports', description: 'Sports news, highlights, and athlete updates' },
+  { id: 'politics', name: 'Politics', description: 'Political news, analysis, and world events' },
+  { id: 'finance', name: 'Finance', description: 'Financial markets, investing, and money management' },
+  { id: 'lifestyle', name: 'Lifestyle', description: 'Lifestyle tips, fashion, and personal development' },
+  { id: 'travel', name: 'Travel', description: 'Travel guides, destinations, and adventure content' },
+  { id: 'food', name: 'Food & Cooking', description: 'Recipes, restaurant reviews, and culinary content' },
+  { id: 'gaming', name: 'Gaming', description: 'Video games, esports, and gaming news' },
+  { id: 'art', name: 'Arts & Culture', description: 'Art, music, literature, and cultural content' },
+  { id: 'environment', name: 'Environment', description: 'Climate change, sustainability, and green living' },
+  { id: 'psychology', name: 'Psychology', description: 'Mental health, psychology, and self-improvement' },
+  { id: 'history', name: 'History', description: 'Historical events, documentaries, and archives' },
+  { id: 'philosophy', name: 'Philosophy', description: 'Philosophical discussions and thought-provoking content' },
+  { id: 'diy', name: 'DIY & Crafts', description: 'Do-it-yourself projects, crafts, and tutorials' },
+  { id: 'parenting', name: 'Parenting', description: 'Parenting tips, family content, and child development' },
 ];
 
 const SOURCE_TYPES = [
@@ -97,9 +105,11 @@ export default function ContentSourcesPage() {
     priority: 'medium' as ContentSource['priority'],
     description: '',
   });
-  const [formError, setFormError] = useState<string | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [, setFormError] = useState<string | null>(null);
+  const [, setFormLoading] = useState(false);
+  const [, setApiError] = useState<string | null>(null);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const router = useRouter();
 
   // Fetch user and content sources from API
@@ -125,7 +135,7 @@ export default function ContentSourcesPage() {
           const sourcesData = await sourcesRes.json();
           setSources(sourcesData);
         }
-      } catch (err) {
+      } catch {
         setApiError('Network error loading content sources.');
         setSources([]);
       } finally {
@@ -195,7 +205,7 @@ export default function ContentSourcesPage() {
       } else {
         setSources(sources.filter(s => s.id !== sourceId));
       }
-    } catch (err) {
+    } catch {
       setApiError('Network error deleting content source.');
     } finally {
       setIsLoading(false);
@@ -220,7 +230,7 @@ export default function ContentSourcesPage() {
         const updated = await res.json();
         setSources(sources.map(s => s.id === sourceId ? updated : s));
       }
-    } catch (err) {
+    } catch {
       setApiError('Network error updating content source.');
     } finally {
       setIsLoading(false);
@@ -273,12 +283,21 @@ export default function ContentSourcesPage() {
         setShowAddForm(false);
         setEditingSource(null);
       }
-    } catch (err) {
+    } catch {
       setFormError('Network error saving content source.');
     } finally {
       setFormLoading(false);
     }
   };
+
+  // Filter categories based on search
+  const filteredCategories = PREDEFINED_CATEGORIES.filter(category =>
+    category.name.toLowerCase().includes(categorySearch.toLowerCase()) ||
+    category.description.toLowerCase().includes(categorySearch.toLowerCase())
+  );
+
+  // Show only first 8 categories by default, unless showing all
+  const categoriesToShow = showAllCategories ? filteredCategories : filteredCategories.slice(0, 8);
 
   const handleAddCategory = async (categoryId: string) => {
     const category = PREDEFINED_CATEGORIES.find(c => c.id === categoryId);
@@ -304,7 +323,7 @@ export default function ContentSourcesPage() {
         const saved = await res.json();
         setSources([...sources, saved]);
       }
-    } catch (err) {
+    } catch {
       setApiError('Network error adding category.');
     } finally {
       setIsLoading(false);
@@ -372,26 +391,114 @@ export default function ContentSourcesPage() {
 
           {/* Quick Add Categories */}
           <div className="mb-8 bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
-              Quick Add Categories
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {PREDEFINED_CATEGORIES.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleAddCategory(category.id)}
-                  disabled={sources.some(s => s.type === 'category' && s.name === category.name)}
-                  className={`p-3 rounded-lg border text-left transition-all duration-200 ${
-                    sources.some(s => s.type === 'category' && s.name === category.name)
-                      ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-                      : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50'
-                  }`}
-                >
-                  <div className="font-medium text-sm">{category.name}</div>
-                  <div className="text-xs text-gray-500 mt-1">{category.description}</div>
-                </button>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-mono font-bold text-gray-900">
+                Browse Categories
+              </h2>
+              <span className="text-sm text-gray-500 font-mono">
+                {filteredCategories.length} categories
+              </span>
             </div>
+            
+            {/* Search Input */}
+            <div className="mb-6">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search categories (e.g., tech, health, finance...)"
+                  value={categorySearch}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategorySearch(e.target.value)}
+                  className="w-full pl-10"
+                />
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  🔍
+                </div>
+                {categorySearch && (
+                  <button
+                    onClick={() => setCategorySearch('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+              {categorySearch && (
+                <div className="mt-2 text-sm text-gray-500 font-mono">
+                  {filteredCategories.length} result{filteredCategories.length === 1 ? '' : 's'} for &quot;{categorySearch}&quot;
+                </div>
+              )}
+            </div>
+
+            {/* Categories Grid */}
+            {filteredCategories.length > 0 ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categoriesToShow.map((category) => {
+                    const isAdded = sources.some(s => s.type === 'category' && s.name === category.name);
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => handleAddCategory(category.id)}
+                        disabled={isAdded}
+                        className={`p-4 rounded-lg border text-left transition-all duration-200 ${
+                          isAdded
+                            ? 'border-green-200 bg-green-50 text-green-700 cursor-not-allowed'
+                            : 'border-gray-200 bg-white hover:border-[#2563eb] hover:bg-blue-50 hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="font-mono font-semibold text-sm mb-1">
+                              {category.name}
+                            </div>
+                            <div className="text-xs text-gray-600 leading-relaxed">
+                              {category.description}
+                            </div>
+                          </div>
+                          {isAdded ? (
+                            <div className="ml-2 mt-1">
+                              <span className="text-green-600 text-sm">✓</span>
+                            </div>
+                          ) : (
+                            <div className="ml-2 mt-1">
+                              <span className="text-gray-400 text-sm">+</span>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Show More/Less Button */}
+                {filteredCategories.length > 8 && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={() => setShowAllCategories(!showAllCategories)}
+                      className="px-6 py-2 text-sm font-mono text-[#0e7490] hover:text-[#2563eb] transition-colors"
+                    >
+                      {showAllCategories 
+                        ? `Show Less (${categoriesToShow.length - 8} hidden)` 
+                        : `Show All ${filteredCategories.length} Categories`
+                      }
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-gray-400 text-4xl mb-4">🔍</div>
+                <p className="text-gray-500 font-mono">
+                  No categories found for &quot;{categorySearch}&quot;
+                </p>
+                <button
+                  onClick={() => setCategorySearch('')}
+                  className="mt-2 text-sm text-[#0e7490] hover:text-[#2563eb] font-mono"
+                >
+                  Clear search
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Add New Source Button */}

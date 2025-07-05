@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "../../../../components/ui/button";
 import { Input } from "../../../../components/ui/input";
 import Link from "next/link";
 
-export default function ResetPasswordConfirmPage() {
+function ResetPasswordConfirmForm() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
@@ -147,5 +147,13 @@ export default function ResetPasswordConfirmPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ResetPasswordConfirmPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResetPasswordConfirmForm />
+    </Suspense>
   );
 } 
