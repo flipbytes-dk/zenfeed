@@ -52,36 +52,56 @@ const SOURCE_TYPES = [
     id: 'youtube' as const, 
     name: 'YouTube Channel', 
     icon: '📺', 
-    placeholder: 'Enter channel URL or @username',
-    description: 'Add YouTube channels for video content'
+    inputType: 'username' as const,
+    placeholder: 'Enter @username or channel URL',
+    examples: ['@channelname', 'https://youtube.com/@username', 'UCxxxxxxxxxxxxxxxxxxxxx'],
+    description: 'Add YouTube channels for video content',
+    urlPattern: /^(https?:\/\/)?(www\.)?(youtube\.com\/(channel\/|c\/|user\/|@)|youtu\.be\/)/i,
+    usernamePattern: /^@?[a-zA-Z0-9_.-]+$/
   },
   { 
     id: 'instagram' as const, 
     name: 'Instagram Account', 
     icon: '📸', 
-    placeholder: 'Enter Instagram username',
-    description: 'Add Instagram accounts for photo/video content'
+    inputType: 'username' as const,
+    placeholder: 'Enter username or profile URL',
+    examples: ['username', 'https://instagram.com/username'],
+    description: 'Add Instagram accounts for photo/video content',
+    urlPattern: /^(https?:\/\/)?(www\.)?instagram\.com\/[a-zA-Z0-9_.-]+/i,
+    usernamePattern: /^@?[a-zA-Z0-9_.-]+$/
   },
   { 
     id: 'twitter' as const, 
     name: 'X/Twitter Account', 
     icon: '🐦', 
-    placeholder: 'Enter Twitter/X username',
-    description: 'Add Twitter/X accounts for posts and threads'
+    inputType: 'username' as const,
+    placeholder: 'Enter username or profile URL',
+    examples: ['@username', 'https://twitter.com/username', 'https://x.com/username'],
+    description: 'Add Twitter/X accounts for posts and threads',
+    urlPattern: /^(https?:\/\/)?(www\.)?(twitter\.com|x\.com)\/[a-zA-Z0-9_]+/i,
+    usernamePattern: /^@?[a-zA-Z0-9_]+$/
   },
   { 
     id: 'rss' as const, 
     name: 'RSS Feed', 
     icon: '📡', 
+    inputType: 'url' as const,
     placeholder: 'Enter RSS feed URL',
-    description: 'Add RSS feeds for blog posts and news'
+    examples: ['https://example.com/feed.xml', 'https://blog.example.com/rss'],
+    description: 'Add RSS feeds for blog posts and news',
+    urlPattern: /^https?:\/\/.+/i,
+    usernamePattern: null
   },
   { 
     id: 'newsletter' as const, 
     name: 'Newsletter', 
     icon: '📧', 
-    placeholder: 'Enter newsletter URL or name',
-    description: 'Add newsletters for curated content'
+    inputType: 'url' as const,
+    placeholder: 'Enter newsletter signup URL',
+    examples: ['https://newsletter.example.com', 'https://example.substack.com'],
+    description: 'Add newsletters for curated content',
+    urlPattern: /^https?:\/\/.+/i,
+    usernamePattern: null
   },
 ];
 
@@ -110,7 +130,127 @@ export default function ContentSourcesPage() {
   const [, setApiError] = useState<string | null>(null);
   const [categorySearch, setCategorySearch] = useState('');
   const [showAllCategories, setShowAllCategories] = useState(false);
+  const [inputError, setInputError] = useState<string | null>(null);
   const router = useRouter();
+
+  // Utility functions for input validation and parsing
+  const extractUsernameFromInput = (input: string, sourceType: ContentSource['type']): { username: string; url: string } => {
+    const sourceConfig = SOURCE_TYPES.find(t => t.id === sourceType);
+    if (!sourceConfig) return { username: '', url: input };
+
+    const trimmedInput = input.trim();
+    
+    // If it's a URL, extract username from it
+    if (sourceConfig.urlPattern && sourceConfig.urlPattern.test(trimmedInput)) {
+      let extractedUsername = '';
+      
+      switch (sourceType) {
+        case 'youtube':
+          // Handle different YouTube URL formats
+          const ytMatch = trimmedInput.match(/(?:youtube\.com\/(?:@|channel\/|c\/|user\/)|youtu\.be\/)([a-zA-Z0-9_.-]+)/i);
+          extractedUsername = ytMatch ? ytMatch[1] : '';
+          break;
+        case 'instagram':
+          const igMatch = trimmedInput.match(/instagram\.com\/([a-zA-Z0-9_.-]+)/i);
+          extractedUsername = igMatch ? igMatch[1] : '';
+          break;
+        case 'twitter':
+          const twMatch = trimmedInput.match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/i);
+          extractedUsername = twMatch ? twMatch[1] : '';
+          break;
+      }
+      
+      return {
+        username: extractedUsername,
+        url: trimmedInput
+      };
+    }
+    
+    // If it's a username, clean it and construct URL
+    if (sourceConfig.usernamePattern && sourceConfig.usernamePattern.test(trimmedInput)) {
+      const cleanUsername = trimmedInput.replace(/^@/, ''); // Remove @ prefix if present
+      let constructedUrl = '';
+      
+      switch (sourceType) {
+        case 'youtube':
+          constructedUrl = `https://youtube.com/@${cleanUsername}`;
+          break;
+        case 'instagram':
+          constructedUrl = `https://instagram.com/${cleanUsername}`;
+          break;
+        case 'twitter':
+          constructedUrl = `https://x.com/${cleanUsername}`;
+          break;
+      }
+      
+      return {
+        username: cleanUsername,
+        url: constructedUrl
+      };
+    }
+
+    // For URL-only sources (RSS, newsletter), return as-is
+    if (sourceConfig.inputType === 'url') {
+      return {
+        username: '',
+        url: trimmedInput
+      };
+    }
+    
+    return { username: '', url: trimmedInput };
+  };
+
+  const validateInput = (input: string, sourceType: ContentSource['type']): string | null => {
+    if (!input.trim()) {
+      return 'This field is required';
+    }
+
+    const sourceConfig = SOURCE_TYPES.find(t => t.id === sourceType);
+    if (!sourceConfig) return 'Invalid source type';
+
+    const trimmedInput = input.trim();
+
+    // For URL-only sources, validate URL format
+    if (sourceConfig.inputType === 'url') {
+      if (!sourceConfig.urlPattern?.test(trimmedInput)) {
+        return 'Please enter a valid URL starting with http:// or https://';
+      }
+      return null;
+    }
+
+    // For username sources, check if it's either a valid URL or username
+    const isValidUrl = sourceConfig.urlPattern?.test(trimmedInput);
+    const isValidUsername = sourceConfig.usernamePattern?.test(trimmedInput);
+
+    if (!isValidUrl && !isValidUsername) {
+      return `Please enter a valid ${sourceType} username or URL`;
+    }
+
+    return null;
+  };
+
+  // Handle input change with real-time validation
+  const handleInputChange = (value: string) => {
+    setFormData({ ...formData, url: value });
+    setInputError(null);
+    
+    // Show validation error only if input is not empty
+    if (value.trim()) {
+      const error = validateInput(value, formData.type);
+      setInputError(error);
+    }
+  };
+
+  // Handle source type change
+  const handleSourceTypeChange = (newType: ContentSource['type']) => {
+    setFormData({ 
+      ...formData, 
+      type: newType,
+      url: '', // Clear URL when changing type
+      username: '' // Clear username when changing type
+    });
+    setInputError(null);
+  };
 
   // Fetch user and content sources from API
   useEffect(() => {
@@ -173,6 +313,7 @@ export default function ContentSourcesPage() {
       description: '',
     });
     setFormError(null);
+    setInputError(null);
   };
 
   const handleEditSource = (source: ContentSource) => {
@@ -187,6 +328,7 @@ export default function ContentSourcesPage() {
       description: source.description || '',
     });
     setFormError(null);
+    setInputError(null);
   };
 
   const handleDeleteSource = async (sourceId: string) => {
@@ -240,7 +382,9 @@ export default function ContentSourcesPage() {
   const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    setInputError(null);
     setFormLoading(true);
+    
     // Basic validation
     if (!formData.name.trim()) {
       setFormError('Name is required.');
@@ -252,21 +396,40 @@ export default function ContentSourcesPage() {
       setFormLoading(false);
       return;
     }
-    // Optionally add more validation here (e.g., URL format)
+
+    // Validate and process the URL/username input
+    const inputValue = formData.url; // This field contains either URL or username
+    const validationError = validateInput(inputValue, formData.type);
+    if (validationError) {
+      setFormError(validationError);
+      setFormLoading(false);
+      return;
+    }
+
+    // Extract username and URL based on input
+    const { username, url } = extractUsernameFromInput(inputValue, formData.type);
+    
+    // Prepare the final form data with processed username and URL
+    const processedFormData = {
+      ...formData,
+      url,
+      username,
+    };
+
     try {
       let res;
       if (editingSource) {
         res = await fetch('/api/content-sources', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...editingSource, ...formData }),
+          body: JSON.stringify({ ...editingSource, ...processedFormData }),
           credentials: 'include',
         });
       } else {
         res = await fetch('/api/content-sources', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(processedFormData),
           credentials: 'include',
         });
       }
@@ -593,7 +756,7 @@ export default function ContentSourcesPage() {
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as ContentSource['type'] })}
+                  onChange={(e) => handleSourceTypeChange(e.target.value as ContentSource['type'])}
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {SOURCE_TYPES.map((type) => (
@@ -622,14 +785,49 @@ export default function ContentSourcesPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  {formData.type === 'rss' ? 'RSS Feed URL' : 'URL or Username'}
+                  {(() => {
+                    const sourceType = SOURCE_TYPES.find(t => t.id === formData.type);
+                    if (sourceType?.inputType === 'url') {
+                      return sourceType.id === 'rss' ? 'RSS Feed URL' : 'URL';
+                    }
+                    return 'Username or URL';
+                  })()}
                 </label>
                 <Input
                   type="text"
                   value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  onChange={(e) => handleInputChange(e.target.value)}
                   placeholder={SOURCE_TYPES.find(t => t.id === formData.type)?.placeholder}
+                  className={inputError ? 'border-red-500 focus:ring-red-500' : ''}
                 />
+                {inputError && (
+                  <p className="mt-1 text-sm text-red-600">{inputError}</p>
+                )}
+                
+                {/* Show examples for current source type */}
+                {(() => {
+                  const sourceType = SOURCE_TYPES.find(t => t.id === formData.type);
+                  if (sourceType?.examples) {
+                    return (
+                      <div className="mt-2">
+                        <p className="text-xs text-gray-500 mb-1">Examples:</p>
+                        <div className="space-y-1">
+                          {sourceType.examples.map((example, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => setFormData({ ...formData, url: example })}
+                              className="block text-xs text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                            >
+                              {example}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
               </div>
 
               <div>
@@ -666,7 +864,11 @@ export default function ContentSourcesPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowAddForm(false)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setInputError(null);
+                    setFormError(null);
+                  }}
                 >
                   Cancel
                 </Button>
