@@ -2,6 +2,7 @@
 
 export interface ContentItem {
   id: string;
+  sourceId: string; // ID of the source this item came from
   title: string;
   description?: string;
   url: string;

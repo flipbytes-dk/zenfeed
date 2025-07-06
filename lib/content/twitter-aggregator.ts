@@ -107,7 +107,7 @@ export class TwitterAggregator extends ContentAggregator {
       const tweets = tweetsData.data || [];
 
       const contentItems = tweets.map((tweet: TwitterTweet) => 
-        this.convertToContentItem(tweet, user, tweetsData.includes)
+        this.convertToContentItem(tweet, user, source, tweetsData.includes)
       );
 
       return {
@@ -241,7 +241,7 @@ export class TwitterAggregator extends ContentAggregator {
     return null;
   }
 
-  private convertToContentItem(tweet: TwitterTweet, user: TwitterUser, includes?: any): ContentItem {
+  private convertToContentItem(tweet: TwitterTweet, user: TwitterUser, source: ContentSource, includes?: any): ContentItem {
     // Get media attachments if any
     let thumbnailUrl: string | undefined;
     if (tweet.attachments?.media_keys && includes?.media) {
@@ -255,6 +255,7 @@ export class TwitterAggregator extends ContentAggregator {
 
     return {
       id: tweet.id,
+      sourceId: source.id,
       title: tweet.text.length > 100 ? `${tweet.text.substring(0, 100)}...` : tweet.text,
       description: tweet.text,
       url: `https://twitter.com/${user.username}/status/${tweet.id}`,

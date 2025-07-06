@@ -43,9 +43,14 @@ export class InstagramAggregator extends ContentAggregator {
       // For business accounts, Instagram Graph API would be needed
       const limit = Math.min(options.limit || 10, 25); // Instagram API limit
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(
-        `${this.baseUrl}/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&limit=${limit}&access_token=${this.accessToken}`
+        `${this.baseUrl}/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count&limit=${limit}&access_token=${this.accessToken}`,
+        { signal: controller.signal }
       );
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         if (response.status === 429) {
@@ -57,9 +62,7 @@ export class InstagramAggregator extends ContentAggregator {
       const data = await response.json();
       const media = data.data || [];
 
-      const contentItems = await Promise.all(
-        media.map((item: InstagramMedia) => this.convertToContentItem(item, source))
-      );
+      const contentItems = media.map((item: InstagramMedia) => this.convertToContentItem(item, source));
 
       return {
         success: true,
@@ -158,9 +161,10 @@ export class InstagramAggregator extends ContentAggregator {
     }
   }
 
-  private async convertToContentItem(media: InstagramMedia, source: ContentSource): Promise<ContentItem> {
+  private convertToContentItem(media: InstagramMedia, source: ContentSource): ContentItem {
     return {
       id: media.id,
+      sourceId: source.id,
       title: media.caption ? (media.caption.length > 100 ? `${media.caption.substring(0, 100)}...` : media.caption) : 'Instagram Post',
       description: media.caption,
       url: media.permalink,

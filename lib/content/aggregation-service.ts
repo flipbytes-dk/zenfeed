@@ -58,8 +58,8 @@ export class ContentAggregationService {
       };
     }
 
-    // Check rate limits
-    const rateLimitKey = `${source.type}`;
+    // Check rate limits (use source-specific rate limiting)
+    const rateLimitKey = `${source.type}-${source.id}`;
     const rateLimit = this.rateLimits.get(rateLimitKey);
     if (rateLimit && rateLimit.remaining <= 0 && new Date() < rateLimit.reset) {
       return {
@@ -251,8 +251,8 @@ export class ContentAggregationService {
 
     // Sort by published date but maintain some priority weighting
     allItems.sort((a, b) => {
-      const aSource = sources.find(s => s.id === a.id.split('-')[0]);
-      const bSource = sources.find(s => s.id === b.id.split('-')[0]);
+      const aSource = sources.find(s => s.id === a.sourceId);
+      const bSource = sources.find(s => s.id === b.sourceId);
       
       // Priority weights
       const priorityWeight = { high: 3, medium: 2, low: 1 };

@@ -191,16 +191,22 @@ export class YouTubeAggregator extends ContentAggregator {
   private extractChannelIdFromUrl(url: string): string | null {
     // Handle various YouTube URL formats
     const patterns = [
-      /youtube\.com\/channel\/([a-zA-Z0-9_-]+)/,
-      /youtube\.com\/c\/([a-zA-Z0-9_-]+)/,
-      /youtube\.com\/user\/([a-zA-Z0-9_-]+)/,
-      /youtube\.com\/@([a-zA-Z0-9_.-]+)/,
+      { pattern: /youtube\.com\/channel\/([a-zA-Z0-9_-]+)/, type: 'channel' },
+      { pattern: /youtube\.com\/c\/([a-zA-Z0-9_-]+)/, type: 'custom' },
+      { pattern: /youtube\.com\/user\/([a-zA-Z0-9_-]+)/, type: 'user' },
+      { pattern: /youtube\.com\/@([a-zA-Z0-9_.-]+)/, type: 'handle' },
     ];
 
-    for (const pattern of patterns) {
+    for (const { pattern, type } of patterns) {
       const match = url.match(pattern);
       if (match) {
-        return match[1];
+        // For channel URLs, the ID is directly usable
+        if (type === 'channel') {
+          return match[1];
+        }
+        // For other types, we need to resolve them via search
+        // Return null to let resolveChannelByUsername handle it
+        return null;
       }
     }
 
@@ -260,7 +266,7 @@ export class YouTubeAggregator extends ContentAggregator {
 
     // Get videos from the uploads playlist
     const playlistResponse = await fetch(
-      `${this.baseUrl}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=${maxResults}&order=date&key=${this.apiKey}`
+      `${this.baseUrl}/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=${maxResults}&key=${this.apiKey}`
     );
 
     if (!playlistResponse.ok) {
@@ -315,6 +321,7 @@ export class YouTubeAggregator extends ContentAggregator {
 
     return {
       id: video.id,
+      sourceId: source.id,
       title: video.snippet.title,
       description: video.snippet.description,
       url: `https://www.youtube.com/watch?v=${video.id}`,

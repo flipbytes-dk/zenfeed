@@ -73,15 +73,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(url.searchParams.get('limit') || '10');
 
     if (!sourceId || !type) {
-      return NextResponse.json({ 
-        error: 'sourceId and type parameters are required' 
-      }, { status: 400 });
+    return NextResponse.json({ 
+    error: 'sourceId and type parameters are required' 
+    }, { status: 400 });
     }
 
-    // Create a temporary source object
-    const tempSource: ContentSource = {
-      id: sourceId,
-      type: type as ContentSource['type'],
+    // Validate source type
+    const validTypes = ['youtube', 'instagram', 'twitter', 'rss', 'newsletter', 'category'];
+    if (!validTypes.includes(type)) {
+    return NextResponse.json({ 
+      error: 'Invalid source type' 
+    }, { status: 400 });
+  }
+
+  // Create a temporary source object
+  const tempSource: ContentSource = {
+    id: sourceId,
+    type: type as ContentSource['type'],
       name: 'Test Source',
       url: url.searchParams.get('url') || undefined,
       username: url.searchParams.get('username') || undefined,

@@ -1,4 +1,5 @@
 import { ContentAggregator, ContentItem, ContentSource, APIResponse, FetchContentOptions, ContentAggregationError } from './types';
+import { XMLParser } from 'fast-xml-parser';
 
 export class RSSAggregator extends ContentAggregator {
   platform = 'rss';
@@ -136,88 +137,102 @@ export class RSSAggregator extends ContentAggregator {
   }
 
   private async parseFeed(feedText: string, source: ContentSource, options: FetchContentOptions): Promise<ContentItem[]> {
-    // Simple RSS/Atom parser (in a real implementation, you'd use a proper XML parser)
-    const items: ContentItem[] = [];
-    
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      allowBooleanAttributes: true,
+      parseTagValue: true,
+      parseAttributeValue: true,
+      trimValues: true,
+      textNodeName: "_text",
+      ignoreDeclaration: true,
+      ignorePiTags: true,
+    });
+
     try {
-      // Check if it's RSS or Atom
-      const isAtom = feedText.includes('<feed') && feedText.includes('xmlns="http://www.w3.org/2005/Atom"');
+      const json = parser.parse(feedText);
       
-      if (isAtom) {
-        return this.parseAtomFeed(feedText, source, options);
+      // Check if it's RSS or Atom
+      if (json.rss && json.rss.channel) {
+        return this.parseRSSItems(json.rss.channel, source, options);
+      } else if (json.feed) {
+        return this.parseAtomItems(json.feed, source, options);
       } else {
-        return this.parseRSSFeed(feedText, source, options);
+        throw new Error('Unknown feed format - not RSS or Atom');
       }
     } catch (error) {
       throw this.createError('PARSE_ERROR', `Failed to parse RSS feed: ${error instanceof Error ? error.message : 'Unknown error'}`, source.id);
     }
   }
 
-  private parseRSSFeed(feedText: string, source: ContentSource, options: FetchContentOptions): ContentItem[] {
-    const items: ContentItem[] = [];
-    
-    // Extract channel info
-    const channelMatch = feedText.match(/<channel[^>]*>([\s\S]*?)<\/channel>/);
-    if (!channelMatch) {
-      throw new Error('Invalid RSS format - no channel found');
+  private filterAndSortItems(items: ContentItem[], options: FetchContentOptions): ContentItem[] {
+    // Filter by date if needed
+    let filtered = items;
+    if (options.since) {
+      filtered = items.filter(item => item.publishedAt >= options.since!);
     }
-
-    const channelContent = channelMatch[1];
     
-    // Extract feed title and description
-    const titleMatch = channelContent.match(/<title[^>]*><!\[CDATA\[(.*?)\]\]><\/title>|<title[^>]*>(.*?)<\/title>/);
-    const descMatch = channelContent.match(/<description[^>]*><!\[CDATA\[(.*?)\]\]><\/description>|<description[^>]*>(.*?)<\/description>/);
+    // Sort by published date (newest first)
+    filtered.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
     
-    const feedTitle = titleMatch ? (titleMatch[1] || titleMatch[2] || '').trim() : source.name;
-    const feedDescription = descMatch ? (descMatch[1] || descMatch[2] || '').trim() : undefined;
-
-    // Extract items
-    const itemMatches = channelContent.match(/<item[^>]*>([\s\S]*?)<\/item>/g);
-    
-    if (!itemMatches) {
-      return items;
-    }
-
-    for (const itemMatch of itemMatches) {
-      try {
-        const item = this.parseRSSItem(itemMatch, source, feedTitle);
-        if (item && (!options.since || item.publishedAt >= options.since)) {
-          items.push(item);
-        }
-      } catch (error) {
-        console.warn('Failed to parse RSS item:', error);
-        // Continue with other items
-      }
-    }
-
-    // Sort by published date (newest first) and apply limit
-    items.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-    
+    // Apply limit
     if (options.limit) {
-      return items.slice(0, options.limit);
+      return filtered.slice(0, options.limit);
     }
-
-    return items;
+    
+    return filtered;
   }
 
-  private parseAtomFeed(feedText: string, source: ContentSource, options: FetchContentOptions): ContentItem[] {
+  private decodeXMLEntities(text: string): string {
+    return text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&#(\d+);/g, (match, dec) => String.fromCharCode(parseInt(dec, 10)))
+      .replace(/&#x([a-fA-F0-9]+);/g, (match, hex) => String.fromCharCode(parseInt(hex, 16)));
+  }
+
+  private sanitizeHTML(html: string): string {
+    // Basic HTML sanitization
+    return html
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+      .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+      .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+  }
+
+  private parseRSSItems(channel: any, source: ContentSource, options: FetchContentOptions): ContentItem[] {
+  const items: ContentItem[] = [];
+  
+  const feedTitle = this.decodeXMLEntities(channel.title?._text || channel.title || source.name);
+  const rssItems = Array.isArray(channel.item) ? channel.item : [channel.item].filter(Boolean);
+
+  for (const rssItem of rssItems) {
+    try {
+        const item = this.convertRSSItemToContentItem(rssItem, source, feedTitle);
+      if (item) {
+        items.push(item);
+      }
+    } catch (error) {
+      console.warn('Failed to parse RSS item:', error);
+      // Continue with other items
+    }
+  }
+
+  return this.filterAndSortItems(items, options);
+  }
+
+  private parseAtomItems(feed: any, source: ContentSource, options: FetchContentOptions): ContentItem[] {
     const items: ContentItem[] = [];
     
-    // Extract feed title
-    const titleMatch = feedText.match(/<title[^>]*>(.*?)<\/title>/);
-    const feedTitle = titleMatch ? titleMatch[1].trim() : source.name;
+    const feedTitle = this.decodeXMLEntities(feed.title?._text || feed.title || source.name);
+    const atomEntries = Array.isArray(feed.entry) ? feed.entry : [feed.entry].filter(Boolean);
 
-    // Extract entries
-    const entryMatches = feedText.match(/<entry[^>]*>([\s\S]*?)<\/entry>/g);
-    
-    if (!entryMatches) {
-      return items;
-    }
-
-    for (const entryMatch of entryMatches) {
+    for (const atomEntry of atomEntries) {
       try {
-        const item = this.parseAtomEntry(entryMatch, source, feedTitle);
-        if (item && (!options.since || item.publishedAt >= options.since)) {
+        const item = this.convertAtomEntryToContentItem(atomEntry, source, feedTitle);
+        if (item) {
           items.push(item);
         }
       } catch (error) {
@@ -226,30 +241,21 @@ export class RSSAggregator extends ContentAggregator {
       }
     }
 
-    // Sort by published date (newest first) and apply limit
-    items.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
-    
-    if (options.limit) {
-      return items.slice(0, options.limit);
-    }
-
-    return items;
+    return this.filterAndSortItems(items, options);
   }
 
-  private parseRSSItem(itemXML: string, source: ContentSource, feedTitle: string): ContentItem | null {
-    const extractText = (tag: string): string => {
-      const cdataMatch = itemXML.match(new RegExp(`<${tag}[^>]*><!\\[CDATA\\[(.*?)\\]\\]></${tag}>`));
-      if (cdataMatch) return cdataMatch[1].trim();
-      
-      const textMatch = itemXML.match(new RegExp(`<${tag}[^>]*>(.*?)</${tag}>`));
-      return textMatch ? textMatch[1].replace(/<[^>]*>/g, '').trim() : '';
-    };
-
-    const title = extractText('title');
-    const description = extractText('description') || extractText('content:encoded');
-    const link = extractText('link');
-    const pubDate = extractText('pubDate');
-    const guid = extractText('guid') || link;
+  private convertRSSItemToContentItem(rssItem: any, source: ContentSource, feedTitle: string): ContentItem | null {
+    const title = this.decodeXMLEntities(rssItem.title?._text || rssItem.title || '');
+    const description = this.decodeXMLEntities(
+      rssItem.description?._text || 
+      rssItem.description || 
+      rssItem['content:encoded']?._text || 
+      rssItem['content:encoded'] || 
+      ''
+    );
+    const link = rssItem.link?._text || rssItem.link || '';
+    const pubDate = rssItem.pubDate?._text || rssItem.pubDate || '';
+    const guid = rssItem.guid?._text || rssItem.guid || link;
 
     if (!title || !link) {
       return null;
@@ -264,8 +270,9 @@ export class RSSAggregator extends ContentAggregator {
 
     return {
       id: guid || `${source.id}-${Date.now()}-${Math.random()}`,
-      title: title,
-      description: description || undefined,
+      sourceId: source.id,
+      title: this.sanitizeHTML(title),
+      description: this.sanitizeHTML(description) || undefined,
       url: link,
       publishedAt,
       author: {
@@ -277,22 +284,32 @@ export class RSSAggregator extends ContentAggregator {
     };
   }
 
-  private parseAtomEntry(entryXML: string, source: ContentSource, feedTitle: string): ContentItem | null {
-    const extractText = (tag: string): string => {
-      const match = entryXML.match(new RegExp(`<${tag}[^>]*>(.*?)</${tag}>`));
-      return match ? match[1].replace(/<[^>]*>/g, '').trim() : '';
-    };
-
-    const extractAttribute = (tag: string, attr: string): string => {
-      const match = entryXML.match(new RegExp(`<${tag}[^>]*${attr}=["'](.*?)["'][^>]*>`));
-      return match ? match[1] : '';
-    };
-
-    const title = extractText('title');
-    const summary = extractText('summary') || extractText('content');
-    const link = extractAttribute('link', 'href');
-    const updated = extractText('updated') || extractText('published');
-    const id = extractText('id');
+  private convertAtomEntryToContentItem(atomEntry: any, source: ContentSource, feedTitle: string): ContentItem | null {
+    const title = this.decodeXMLEntities(atomEntry.title?._text || atomEntry.title || '');
+    const summary = this.decodeXMLEntities(
+      atomEntry.summary?._text || 
+      atomEntry.summary || 
+      atomEntry.content?._text || 
+      atomEntry.content || 
+      ''
+    );
+    
+    // Handle Atom link element (could be an object with href attribute)
+    let link = '';
+    if (atomEntry.link) {
+      if (typeof atomEntry.link === 'string') {
+        link = atomEntry.link;
+      } else if (atomEntry.link['@_href']) {
+        link = atomEntry.link['@_href'];
+      } else if (Array.isArray(atomEntry.link)) {
+        // Find the first link with type="text/html" or no type
+        const htmlLink = atomEntry.link.find((l: any) => !l['@_type'] || l['@_type'] === 'text/html');
+        link = htmlLink?.['@_href'] || atomEntry.link[0]?.['@_href'] || '';
+      }
+    }
+    
+    const published = atomEntry.published?._text || atomEntry.published || atomEntry.updated?._text || atomEntry.updated || '';
+    const id = atomEntry.id?._text || atomEntry.id || link;
 
     if (!title || !link) {
       return null;
@@ -300,15 +317,16 @@ export class RSSAggregator extends ContentAggregator {
 
     let publishedAt: Date;
     try {
-      publishedAt = updated ? new Date(updated) : new Date();
+      publishedAt = published ? new Date(published) : new Date();
     } catch {
       publishedAt = new Date();
     }
 
     return {
       id: id || `${source.id}-${Date.now()}-${Math.random()}`,
-      title: title,
-      description: summary || undefined,
+      sourceId: source.id,
+      title: this.sanitizeHTML(title),
+      description: this.sanitizeHTML(summary) || undefined,
       url: link,
       publishedAt,
       author: {
