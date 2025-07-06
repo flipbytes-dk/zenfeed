@@ -89,7 +89,7 @@
   - [x] 2.1 Design UI for adding/editing/removing content sources
   - [x] 2.2 Implement search and selection of predefined categories/topics
   - [x] 2.3 Implement input for usernames/channels and RSS/newsletter URLs
-  - [ ] 2.4 Integrate with YouTube, Instagram, X/Twitter, RSS, Substack APIs
+  - [x] 2.4 Integrate with YouTube, Instagram, X/Twitter, RSS, Substack APIs
   - [ ] 2.5 Implement social account connection/import
   - [ ] 2.6 Implement priority settings for topics (High/Medium/Low)
   - [ ] 2.7 Implement validation and testing of content sources
