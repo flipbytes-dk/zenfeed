@@ -131,6 +131,12 @@ export default function ContentSourcesPage() {
   const [categorySearch, setCategorySearch] = useState('');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [inputError, setInputError] = useState<string | null>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState<{
+    valid: boolean;
+    error?: string;
+    sourceInfo?: { name: string; description?: string; followerCount?: number };
+  } | null>(null);
   const router = useRouter();
 
   // Utility functions for input validation and parsing
@@ -229,15 +235,70 @@ export default function ContentSourcesPage() {
     return null;
   };
 
+  // Validate source using API
+  const validateSourceWithAPI = async (sourceData: {
+    type: ContentSource['type'];
+    url: string;
+    username: string;
+    name: string;
+  }) => {
+    try {
+      setIsValidating(true);
+      setValidationResult(null);
+
+      const response = await fetch('/api/content-sources/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sourceData),
+        credentials: 'include',
+      });
+
+      const result = await response.json();
+      setValidationResult(result);
+      
+      if (!result.valid && result.error) {
+        setInputError(result.error);
+      } else {
+        setInputError(null);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Validation error:', error);
+      setValidationResult({
+        valid: false,
+        error: 'Failed to validate source. Please check your internet connection.',
+      });
+      return { valid: false, error: 'Validation failed' };
+    } finally {
+      setIsValidating(false);
+    }
+  };
+
   // Handle input change with real-time validation
   const handleInputChange = (value: string) => {
     setFormData({ ...formData, url: value });
     setInputError(null);
+    setValidationResult(null);
     
-    // Show validation error only if input is not empty
+    // Show client-side validation error only if input is not empty
     if (value.trim()) {
       const error = validateInput(value, formData.type);
       setInputError(error);
+      
+      // If client-side validation passes, trigger API validation after a delay
+      if (!error && value.trim().length > 3) {
+        // Debounce API validation
+        setTimeout(() => {
+          const { username, url } = extractUsernameFromInput(value, formData.type);
+          validateSourceWithAPI({
+            type: formData.type,
+            url,
+            username,
+            name: formData.name || 'Test Source',
+          });
+        }, 1000); // 1 second delay
+      }
     }
   };
 
@@ -250,6 +311,7 @@ export default function ContentSourcesPage() {
       username: '' // Clear username when changing type
     });
     setInputError(null);
+    setValidationResult(null);
   };
 
   // Fetch user and content sources from API
@@ -314,6 +376,7 @@ export default function ContentSourcesPage() {
     });
     setFormError(null);
     setInputError(null);
+    setValidationResult(null);
   };
 
   const handleEditSource = (source: ContentSource) => {
@@ -802,6 +865,43 @@ export default function ContentSourcesPage() {
                 />
                 {inputError && (
                   <p className="mt-1 text-sm text-red-600">{inputError}</p>
+                )}
+
+                {/* Validation status */}
+                {isValidating && (
+                  <div className="mt-1 flex items-center text-sm text-blue-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                    Validating source...
+                  </div>
+                )}
+
+                {validationResult && !isValidating && (
+                  <div className={`mt-1 text-sm ${validationResult.valid ? 'text-green-600' : 'text-red-600'}`}>
+                    {validationResult.valid ? (
+                      <div>
+                        <div className="flex items-center">
+                          <span className="text-green-500 mr-1">✓</span>
+                          Valid source
+                        </div>
+                        {validationResult.sourceInfo && (
+                          <div className="mt-1 text-xs text-gray-600">
+                            <div className="font-medium">{validationResult.sourceInfo.name}</div>
+                            {validationResult.sourceInfo.description && (
+                              <div className="truncate">{validationResult.sourceInfo.description}</div>
+                            )}
+                            {validationResult.sourceInfo.followerCount && (
+                              <div>{validationResult.sourceInfo.followerCount.toLocaleString()} followers</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        <span className="text-red-500 mr-1">✗</span>
+                        {validationResult.error || 'Invalid source'}
+                      </div>
+                    )}
+                  </div>
                 )}
                 
                 {/* Show examples for current source type */}
