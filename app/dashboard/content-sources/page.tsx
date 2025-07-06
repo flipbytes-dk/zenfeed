@@ -111,6 +111,15 @@ const PRIORITY_LEVELS = [
   { id: 'low' as const, name: 'Low Priority', description: 'Show occasionally', color: 'text-green-600 bg-green-50' },
 ];
 
+/**
+ * Displays and manages the user's content sources and interests, allowing authenticated users to add, edit, remove, and organize content sources and predefined categories for a personalized feed.
+ *
+ * Provides UI for browsing and searching categories, adding new sources with input validation, editing existing sources, toggling source activation, and removing sources. Integrates with backend APIs for user authentication and persistent source management.
+ *
+ * Redirects to the login page if the user is not authenticated.
+ *
+ * @returns The content sources management page component.
+ */
 export default function ContentSourcesPage() {
   const [user, setUser] = useState<UserSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
