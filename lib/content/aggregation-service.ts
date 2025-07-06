@@ -1,6 +1,8 @@
 import { ContentAggregator, ContentItem, ContentSource, APIResponse, FetchContentOptions, ContentAggregationError } from './types';
 import { RSSAggregator } from './rss-aggregator';
 import { YouTubeAggregator } from './youtube-aggregator';
+import { TwitterAggregator } from './twitter-aggregator';
+import { InstagramAggregator } from './instagram-aggregator';
 
 interface AggregationResult {
   sourceId: string;
@@ -32,9 +34,17 @@ export class ContentAggregationService {
       this.aggregators.set('youtube', new YouTubeAggregator(youtubeApiKey));
     }
 
-    // TODO: Initialize other aggregators when implemented
-    // this.aggregators.set('instagram', new InstagramAggregator());
-    // this.aggregators.set('twitter', new TwitterAggregator());
+    // Initialize Twitter aggregator if bearer token is available
+    const twitterBearerToken = process.env.TWITTER_BEARER_TOKEN;
+    if (twitterBearerToken) {
+      this.aggregators.set('twitter', new TwitterAggregator(twitterBearerToken));
+    }
+
+    // Initialize Instagram aggregator if access token is available
+    const instagramAccessToken = process.env.INSTAGRAM_ACCESS_TOKEN;
+    if (instagramAccessToken) {
+      this.aggregators.set('instagram', new InstagramAggregator(instagramAccessToken));
+    }
   }
 
   async fetchContentFromSource(source: ContentSource, options: FetchContentOptions = {}): Promise<AggregationResult> {
