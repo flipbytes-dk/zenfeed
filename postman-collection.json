@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "ZenFeed API Testing",
+    "description": "Test collection for ZenFeed content aggregation APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Validate RSS Source",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"rss\",\n  \"url\": \"https://feeds.npr.org/1001/rss.xml\",\n  \"name\": \"NPR News\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/content-sources/validate",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "content-sources", "validate"]
+        }
+      }
+    },
+    {
+      "name": "Validate YouTube Source",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"youtube\",\n  \"username\": \"TechCrunch\",\n  \"name\": \"TechCrunch YouTube\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/content-sources/validate",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "content-sources", "validate"]
+        }
+      }
+    },
+    {
+      "name": "Fetch RSS Content",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{BASE_URL}}/api/content-sources/fetch?sourceId=test-rss&type=rss&url=https://feeds.npr.org/1001/rss.xml&limit=5",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "content-sources", "fetch"],
+          "query": [
+            {
+              "key": "sourceId",
+              "value": "test-rss"
+            },
+            {
+              "key": "type",
+              "value": "rss"
+            },
+            {
+              "key": "url",
+              "value": "https://feeds.npr.org/1001/rss.xml"
+            },
+            {
+              "key": "limit",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Test Invalid Source Type",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"type\": \"invalid\",\n  \"url\": \"https://example.com\",\n  \"name\": \"Invalid Source\"\n}"
+        },
+        "url": {
+          "raw": "{{BASE_URL}}/api/content-sources/validate",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "content-sources", "validate"]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000"
+    }
+  ]
+}

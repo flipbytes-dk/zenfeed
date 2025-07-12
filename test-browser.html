@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenFeed API Tester</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #007cba; color: white; border: none; padding: 10px 15px; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #005a87; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧪 ZenFeed API Tester</h1>
+    <p>Test the content aggregation APIs directly from your browser.</p>
+
+    <div class="test-section">
+        <h3>📋 Test Source Validation</h3>
+        <select id="sourceType">
+            <option value="rss">RSS Feed</option>
+            <option value="youtube">YouTube Channel</option>
+            <option value="twitter">Twitter Account</option>
+            <option value="instagram">Instagram Account</option>
+        </select>
+        <input type="text" id="sourceUrl" placeholder="Source URL (for RSS)" />
+        <input type="text" id="sourceUsername" placeholder="Username (for social platforms)" />
+        <input type="text" id="sourceName" placeholder="Source Name" />
+        <button onclick="testValidation()">🔍 Validate Source</button>
+        <pre id="validationResult"></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>📥 Test Content Fetching</h3>
+        <input type="text" id="fetchUrl" placeholder="RSS Feed URL" value="https://feeds.npr.org/1001/rss.xml" />
+        <input type="number" id="fetchLimit" placeholder="Limit" value="5" min="1" max="20" />
+        <button onclick="testFetching()">📥 Fetch Content</button>
+        <pre id="fetchResult"></pre>
+    </div>
+
+    <div class="test-section">
+        <h3>🎯 Quick Tests</h3>
+        <button onclick="testNPR()">📰 Test NPR RSS</button>
+        <button onclick="testTechCrunch()">🔧 Test TechCrunch (YouTube)</button>
+        <button onclick="testInvalidType()">❌ Test Invalid Type</button>
+        <pre id="quickTestResult"></pre>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        async function makeRequest(url, options = {}) {
+            try {
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+                const data = await response.json();
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testValidation() {
+            const type = document.getElementById('sourceType').value;
+            const url = document.getElementById('sourceUrl').value;
+            const username = document.getElementById('sourceUsername').value;
+            const name = document.getElementById('sourceName').value;
+
+            const payload = {
+                type,
+                name: name || `Test ${type} source`
+            };
+
+            if (url) payload.url = url;
+            if (username) payload.username = username;
+
+            const result = await makeRequest(`${API_BASE}/api/content-sources/validate`, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+
+            document.getElementById('validationResult').textContent = JSON.stringify(result, null, 2);
+            document.getElementById('validationResult').className = result.success ? 'success' : 'error';
+        }
+
+        async function testFetching() {
+            const url = document.getElementById('fetchUrl').value;
+            const limit = document.getElementById('fetchLimit').value;
+
+            if (!url) {
+                alert('Please enter a URL');
+                return;
+            }
+
+            const params = new URLSearchParams({
+                sourceId: 'test-fetch',
+                type: 'rss',
+                url: url,
+                limit: limit || '5'
+            });
+
+            const result = await makeRequest(`${API_BASE}/api/content-sources/fetch?${params}`);
+            document.getElementById('fetchResult').textContent = JSON.stringify(result, null, 2);
+            document.getElementById('fetchResult').className = result.success ? 'success' : 'error';
+        }
+
+        async function testNPR() {
+            const result = await makeRequest(`${API_BASE}/api/content-sources/validate`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: 'rss',
+                    url: 'https://feeds.npr.org/1001/rss.xml',
+                    name: 'NPR News'
+                })
+            });
+            document.getElementById('quickTestResult').textContent = JSON.stringify(result, null, 2);
+            document.getElementById('quickTestResult').className = result.success ? 'success' : 'error';
+        }
+
+        async function testTechCrunch() {
+            const result = await makeRequest(`${API_BASE}/api/content-sources/validate`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: 'youtube',
+                    username: 'TechCrunch',
+                    name: 'TechCrunch YouTube'
+                })
+            });
+            document.getElementById('quickTestResult').textContent = JSON.stringify(result, null, 2);
+            document.getElementById('quickTestResult').className = result.success ? 'success' : 'error';
+        }
+
+        async function testInvalidType() {
+            const result = await makeRequest(`${API_BASE}/api/content-sources/validate`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    type: 'invalid',
+                    url: 'https://example.com',
+                    name: 'Invalid Source'
+                })
+            });
+            document.getElementById('quickTestResult').textContent = JSON.stringify(result, null, 2);
+            document.getElementById('quickTestResult').className = result.success ? 'success' : 'error';
+        }
+    </script>
+</body>
+</html>

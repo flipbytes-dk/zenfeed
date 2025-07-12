@@ -139,6 +139,17 @@ export default function ContentSourcesPage() {
   } | null>(null);
   const router = useRouter();
 
+  // Placeholder: Assume user has not connected Instagram
+  const hasInstagramToken = false; // TODO: Replace with real check from user/session
+
+  // Instagram OAuth config (replace with your real client ID and redirect URI)
+  const INSTAGRAM_CLIENT_ID = process.env.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID || '';
+  const INSTAGRAM_REDIRECT_URI = typeof window !== 'undefined' ? window.location.origin + '/api/content-sources/instagram/callback' : '';
+  const INSTAGRAM_AUTH_URL =
+    `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
+    `&scope=user_profile,user_media&response_type=code`;
+
   // Utility functions for input validation and parsing
   const extractUsernameFromInput = (input: string, sourceType: ContentSource['type']): { username: string; url: string } => {
     const sourceConfig = SOURCE_TYPES.find(t => t.id === sourceType);
@@ -978,6 +989,16 @@ export default function ContentSourcesPage() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+      {/* Instagram Connect Button */}
+      {!hasInstagramToken && (
+        <div className="mb-4">
+          <Button asChild variant="outline">
+            <a href={INSTAGRAM_AUTH_URL}>
+              Connect Instagram
+            </a>
+          </Button>
         </div>
       )}
     </div>
