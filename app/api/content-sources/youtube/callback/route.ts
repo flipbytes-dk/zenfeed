@@ -3,23 +3,24 @@ import { requireAuth } from '@/lib/auth/utils';
 import { encryptToken } from '@/lib/utils';
 import { PrismaClient } from '@/lib/generated/prisma';
 
-const prisma = new PrismaClient();
+export async function GET(request: NextRequest) {
+  // Move env var validation inside the handler
+  const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID;
+  const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET;
+  const YOUTUBE_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI;
+  if (!YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET || !YOUTUBE_REDIRECT_URI) {
+    return NextResponse.json({ success: false, error: 'Missing YouTube OAuth environment variables' }, { status: 500 });
+  }
 
-const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID;
-const YOUTUBE_CLIENT_SECRET = process.env.YOUTUBE_CLIENT_SECRET;
-const YOUTUBE_REDIRECT_URI = process.env.YOUTUBE_REDIRECT_URI;
+  const prisma = new PrismaClient();
 
-if (!YOUTUBE_CLIENT_ID || !YOUTUBE_CLIENT_SECRET || !YOUTUBE_REDIRECT_URI) {
-  throw new Error('Missing YouTube OAuth environment variables');
-}
-
-export async function GET(req: NextRequest) {
   try {
-    const session = requireAuth(req);
-    const { searchParams } = new URL(req.url);
+    const session = requireAuth(request);
+    const userId = session.userId;
+    const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     if (!code) {
-      return NextResponse.json({ error: 'Missing code parameter' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Missing code parameter' }, { status: 400 });
     }
 
     // Exchange code for tokens
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-    if (existingAccount && existingAccount.userId !== session.userId) {
+    if (existingAccount && existingAccount.userId !== userId) {
       return NextResponse.json({ error: 'This YouTube account is already connected to another user.' }, { status: 409 });
     }
 
@@ -85,12 +86,12 @@ export async function GET(req: NextRequest) {
         },
       },
       update: {
-        userId: session.userId,
+        userId: userId,
         accessToken: encryptToken(accessToken),
         refreshToken: refreshToken ? encryptToken(refreshToken) : undefined,
       },
       create: {
-        userId: session.userId,
+        userId: userId,
         provider: 'youtube',
         providerAccountId,
         accessToken: encryptToken(accessToken),
@@ -102,5 +103,7 @@ export async function GET(req: NextRequest) {
   } catch (err) {
     console.error('YouTube OAuth callback error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 } 

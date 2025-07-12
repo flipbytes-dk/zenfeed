@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/utils';
 import { PrismaClient } from '@/lib/generated/prisma';
 
-const prisma = new PrismaClient();
-
 export async function GET(request: NextRequest) {
+  const prisma = new PrismaClient();
   try {
     const session = requireAuth(request);
     const userId = session.userId;
@@ -39,19 +38,19 @@ export async function GET(request: NextRequest) {
     let youtube: {
       connected: boolean;
       providerAccountId?: string;
-      username?: string;
     } = { connected: false };
     if (ytAccount) {
       youtube = {
         connected: true,
         providerAccountId: ytAccount.providerAccountId,
-        // Username is not stored, but could be fetched if needed
       };
     }
 
     return NextResponse.json({ instagram, youtube });
-  } catch (error) {
-    console.error('Connected accounts error:', error);
+  } catch (err) {
+    console.error('Connected accounts error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } finally {
+    await prisma.$disconnect();
   }
 } 
