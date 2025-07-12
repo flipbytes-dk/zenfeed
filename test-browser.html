@@ -56,6 +56,11 @@
         <pre id="connectedAccountsResult"></pre>
     </div>
     <div class="test-section">
+        <h3>🔗 Test YouTube OAuth Callback</h3>
+        <button id="testYoutubeCallbackBtn">🔗 Test YouTube OAuth Callback (manual)</button>
+        <pre id="youtubeCallbackResult"></pre>
+    </div>
+    <div class="test-section">
         <label for="apiBaseInput">API Base URL:</label>
         <input type="text" id="apiBaseInput" value="" placeholder="Override API base (default: window.location.origin)" />
         <button id="setApiBaseBtn">Set API Base</button>
@@ -180,11 +185,22 @@
             document.getElementById('quickTestResult').className = result.success ? 'success' : 'error';
         }
 
+        document.getElementById('testYoutubeCallbackBtn').onclick = async function() {
+            const result = await makeRequest(`${API_BASE}/api/content-sources/youtube/callback?code=TEST_CODE`);
+            const el = document.getElementById('youtubeCallbackResult');
+            el.textContent = JSON.stringify(result, null, 2);
+            el.className = result.success ? 'success' : 'error';
+        };
+
         document.getElementById('testConnectedAccountsBtn').onclick = async function() {
             const result = await makeRequest(`${API_BASE}/api/auth/connected-accounts`);
             const el = document.getElementById('connectedAccountsResult');
             el.textContent = JSON.stringify(result, null, 2);
             el.className = result.success ? 'success' : 'error';
+            // Show YouTube connection status if present
+            if (result.data && result.data.youtube) {
+                el.textContent += `\nYouTube connected: ${result.data.youtube.connected}`;
+            }
         };
     </script>
 </body>

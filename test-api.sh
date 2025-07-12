@@ -47,6 +47,12 @@ run_test "RSS Content Fetching" \
 run_test "Invalid Source Type (Should Fail)" \
   "curl -s -X POST \"$BASE_URL/api/content-sources/validate\" -H 'Content-Type: application/json' -d '{\"type\": \"invalid\", \"url\": \"https://example.com\", \"name\": \"Invalid Source\"}' | jq '.'"
 
+run_test "YouTube OAuth Callback (manual, expect 400+)" \
+  "curl -s -X GET \"$BASE_URL/api/content-sources/youtube/callback?code=TEST_CODE\" | jq '.'"
+
+run_test "Check Connected Accounts (YouTube key)" \
+  "curl -s -X GET \"$BASE_URL/api/auth/connected-accounts\" | jq 'select(.youtube)'"
+
 run_test "Check Connected Accounts" \
   "curl -s -X GET \"$BASE_URL/api/auth/connected-accounts\" | jq '.'"
 
