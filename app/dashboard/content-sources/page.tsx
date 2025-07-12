@@ -143,6 +143,10 @@ export default function ContentSourcesPage() {
   const [instagramStatus, setInstagramStatus] = useState<'loading' | 'connected' | 'not_connected' | 'error'>('loading');
   const [instagramError, setInstagramError] = useState<string | null>(null);
 
+  // Add YouTube connection state
+  const [youtubeStatus, setYoutubeStatus] = useState<'loading' | 'connected' | 'not_connected' | 'error'>('loading');
+  const [youtubeError, setYoutubeError] = useState<string | null>(null);
+
   useEffect(() => {
     let isMounted = true;
     const checkInstagram = async () => {
@@ -168,6 +172,31 @@ export default function ContentSourcesPage() {
     return () => { isMounted = false; };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    const checkYoutube = async () => {
+      try {
+        setYoutubeStatus('loading');
+        setYoutubeError(null);
+        const res = await fetch('/api/auth/connected-accounts', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to check YouTube connection');
+        const data = await res.json();
+        if (data.youtube?.connected) {
+          if (isMounted) setYoutubeStatus('connected');
+        } else {
+          if (isMounted) setYoutubeStatus('not_connected');
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setYoutubeStatus('error');
+          setYoutubeError(err?.message || 'Unknown error');
+        }
+      }
+    };
+    checkYoutube();
+    return () => { isMounted = false; };
+  }, []);
+
   // Instagram OAuth config (replace with your real client ID and redirect URI)
   const INSTAGRAM_CLIENT_ID = process.env.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID || '';
   const INSTAGRAM_REDIRECT_URI = typeof window !== 'undefined' ? window.location.origin + '/api/content-sources/instagram/callback' : '';
@@ -175,6 +204,14 @@ export default function ContentSourcesPage() {
     `https://api.instagram.com/oauth/authorize?client_id=${INSTAGRAM_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(INSTAGRAM_REDIRECT_URI)}` +
     `&scope=user_profile,user_media&response_type=code`;
+
+  // YouTube OAuth config
+  const YOUTUBE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID || '';
+  const YOUTUBE_REDIRECT_URI = typeof window !== 'undefined' ? window.location.origin + '/api/content-sources/youtube/callback' : '';
+  const YOUTUBE_AUTH_URL =
+    `https://accounts.google.com/o/oauth2/v2/auth?client_id=${YOUTUBE_CLIENT_ID}` +
+    `&redirect_uri=${encodeURIComponent(YOUTUBE_REDIRECT_URI)}` +
+    `&response_type=code&scope=https://www.googleapis.com/auth/youtube.readonly&access_type=offline&prompt=consent`;
 
   // Utility functions for input validation and parsing
   const extractUsernameFromInput = (input: string, sourceType: ContentSource['type']): { username: string; url: string } => {
@@ -769,6 +806,7 @@ export default function ContentSourcesPage() {
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               Social Account Connections
             </h2>
+            {/* Instagram */}
             {instagramStatus === 'loading' && (
               <div className="flex items-center text-gray-500">
                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></span>
@@ -790,6 +828,29 @@ export default function ContentSourcesPage() {
             )}
             {instagramStatus === 'error' && (
               <div className="text-red-600">{instagramError || 'Failed to check Instagram connection.'}</div>
+            )}
+            {/* YouTube */}
+            {youtubeStatus === 'loading' && (
+              <div className="flex items-center text-gray-500 mt-2">
+                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></span>
+                Checking YouTube connection...
+              </div>
+            )}
+            {youtubeStatus === 'connected' && (
+              <div className="flex items-center text-green-600 mt-2">
+                <span className="mr-2">✓</span>
+                YouTube Connected
+              </div>
+            )}
+            {youtubeStatus === 'not_connected' && (
+              <Button asChild variant="outline" className="mr-4 mt-2">
+                <a href={YOUTUBE_AUTH_URL}>
+                  📺 Connect YouTube
+                </a>
+              </Button>
+            )}
+            {youtubeStatus === 'error' && (
+              <div className="text-red-600 mt-2">{youtubeError || 'Failed to check YouTube connection.'}</div>
             )}
           </div>
 
