@@ -895,9 +895,7 @@ export default function ContentSourcesPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getPriorityColor(source.priority)}`}>
-                        {source.priority} priority
-                      </span>
+                      <div className={`inline-block px-2 py-1 rounded text-xs font-semibold ${getPriorityColor(source.priority)}`}>{source.priority.charAt(0).toUpperCase() + source.priority.slice(1)}</div>
                       <label className="inline-flex items-center">
                         <input
                           type="checkbox"
@@ -971,6 +969,30 @@ export default function ContentSourcesPage() {
                   placeholder="Enter a name for this source"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Priority
+                </label>
+                <div className="flex space-x-4">
+                  {PRIORITY_LEVELS.map((level) => (
+                    <label key={level.id} className={`flex items-center cursor-pointer px-2 py-1 rounded ${formData.priority === level.id ? level.color + ' ring-2 ring-indigo-500' : 'bg-gray-50 text-gray-600'}`}>
+                      <input
+                        type="radio"
+                        name="priority"
+                        value={level.id}
+                        checked={formData.priority === level.id}
+                        onChange={() => setFormData({ ...formData, priority: level.id })}
+                        className="mr-2"
+                      />
+                      <span className="font-medium">{level.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {PRIORITY_LEVELS.find(p => p.id === formData.priority)?.description}
+                </p>
               </div>
 
               <div>
@@ -1055,23 +1077,6 @@ export default function ContentSourcesPage() {
                   }
                   return null;
                 })()}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority Level
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as ContentSource['priority'] })}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {PRIORITY_LEVELS.map((level) => (
-                    <option key={level.id} value={level.id}>
-                      {level.name} - {level.description}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div>
