@@ -50,19 +50,47 @@
         <pre id="quickTestResult"></pre>
     </div>
 
+    <div class="test-section">
+        <h3>🔗 Test Connected Accounts</h3>
+        <button id="testConnectedAccountsBtn">🔗 Check Connected Accounts</button>
+        <pre id="connectedAccountsResult"></pre>
+    </div>
+    <div class="test-section">
+        <label for="apiBaseInput">API Base URL:</label>
+        <input type="text" id="apiBaseInput" value="" placeholder="Override API base (default: window.location.origin)" />
+        <button id="setApiBaseBtn">Set API Base</button>
+        <span id="apiBaseStatus" style="margin-left:10px;"></span>
+    </div>
     <script>
-        const API_BASE = window.location.origin;
+        let API_BASE = window.location.origin;
+        const apiBaseInput = document.getElementById('apiBaseInput');
+        const setApiBaseBtn = document.getElementById('setApiBaseBtn');
+        const apiBaseStatus = document.getElementById('apiBaseStatus');
+        setApiBaseBtn.onclick = function() {
+            if (apiBaseInput.value) {
+                API_BASE = apiBaseInput.value;
+                apiBaseStatus.textContent = '✅ Set to ' + API_BASE;
+            } else {
+                API_BASE = window.location.origin;
+                apiBaseStatus.textContent = 'Using default: ' + API_BASE;
+            }
+        };
 
         async function makeRequest(url, options = {}) {
             try {
                 const response = await fetch(url, {
-                    headers: {
+                    headers: options.body ? {
                         'Content-Type': 'application/json',
-                        ...options.headers
-                    },
+                        ...(options.headers || {})
+                    } : (options.headers || {}),
                     ...options
                 });
-                const data = await response.json();
+                let data;
+                try {
+                    data = await response.json();
+                } catch {
+                    data = await response.text();
+                }
                 return { success: response.ok, data, status: response.status };
             } catch (error) {
                 return { success: false, error: error.message };
@@ -151,6 +179,13 @@
             document.getElementById('quickTestResult').textContent = JSON.stringify(result, null, 2);
             document.getElementById('quickTestResult').className = result.success ? 'success' : 'error';
         }
+
+        document.getElementById('testConnectedAccountsBtn').onclick = async function() {
+            const result = await makeRequest(`${API_BASE}/api/auth/connected-accounts`);
+            const el = document.getElementById('connectedAccountsResult');
+            el.textContent = JSON.stringify(result, null, 2);
+            el.className = result.success ? 'success' : 'error';
+        };
     </script>
 </body>
 </html>

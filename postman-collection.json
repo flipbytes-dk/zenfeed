@@ -96,6 +96,61 @@
           "path": ["api", "content-sources", "validate"]
         }
       }
+    },
+    {
+      "name": "Check Connected Accounts",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{BASE_URL}}/api/auth/connected-accounts",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "auth", "connected-accounts"]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Instagram key exists', function () {",
+              "    var json = pm.response.json();",
+              "    pm.expect(json).to.have.property('instagram');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Instagram OAuth Callback (manual)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{BASE_URL}}/api/content-sources/instagram/callback?code=TEST_CODE",
+          "host": ["{{BASE_URL}}"],
+          "path": ["api", "content-sources", "instagram", "callback"],
+          "query": [
+            {"key": "code", "value": "TEST_CODE"}
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 or 400+', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401, 500]);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ]
     }
   ],
   "variable": [

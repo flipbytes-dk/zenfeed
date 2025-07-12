@@ -139,8 +139,34 @@ export default function ContentSourcesPage() {
   } | null>(null);
   const router = useRouter();
 
-  // Placeholder: Assume user has not connected Instagram
-  const hasInstagramToken = false; // TODO: Replace with real check from user/session
+  // Instagram connection state
+  const [instagramStatus, setInstagramStatus] = useState<'loading' | 'connected' | 'not_connected' | 'error'>('loading');
+  const [instagramError, setInstagramError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkInstagram = async () => {
+      try {
+        setInstagramStatus('loading');
+        setInstagramError(null);
+        const res = await fetch('/api/auth/connected-accounts', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to check Instagram connection');
+        const data = await res.json();
+        if (data.instagram?.connected) {
+          if (isMounted) setInstagramStatus('connected');
+        } else {
+          if (isMounted) setInstagramStatus('not_connected');
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setInstagramStatus('error');
+          setInstagramError(err?.message || 'Unknown error');
+        }
+      }
+    };
+    checkInstagram();
+    return () => { isMounted = false; };
+  }, []);
 
   // Instagram OAuth config (replace with your real client ID and redirect URI)
   const INSTAGRAM_CLIENT_ID = process.env.NEXT_PUBLIC_INSTAGRAM_CLIENT_ID || '';
@@ -738,6 +764,35 @@ export default function ContentSourcesPage() {
             )}
           </div>
 
+          {/* Social Account Connections */}
+          <div className="mb-8 bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              Social Account Connections
+            </h2>
+            {instagramStatus === 'loading' && (
+              <div className="flex items-center text-gray-500">
+                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-400 mr-2"></span>
+                Checking Instagram connection...
+              </div>
+            )}
+            {instagramStatus === 'connected' && (
+              <div className="flex items-center text-green-600">
+                <span className="mr-2">✓</span>
+                Instagram Connected
+              </div>
+            )}
+            {instagramStatus === 'not_connected' && (
+              <Button asChild variant="outline" className="mr-4">
+                <a href={INSTAGRAM_AUTH_URL}>
+                  📸 Connect Instagram
+                </a>
+              </Button>
+            )}
+            {instagramStatus === 'error' && (
+              <div className="text-red-600">{instagramError || 'Failed to check Instagram connection.'}</div>
+            )}
+          </div>
+
           {/* Add New Source Button */}
           <div className="mb-6 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-900">
@@ -989,16 +1044,6 @@ export default function ContentSourcesPage() {
               </div>
             </form>
           </div>
-        </div>
-      )}
-      {/* Instagram Connect Button */}
-      {!hasInstagramToken && (
-        <div className="mb-4">
-          <Button asChild variant="outline">
-            <a href={INSTAGRAM_AUTH_URL}>
-              Connect Instagram
-            </a>
-          </Button>
         </div>
       )}
     </div>
