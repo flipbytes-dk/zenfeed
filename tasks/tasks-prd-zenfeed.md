@@ -52,6 +52,7 @@
 - `app/dashboard/content-sources/page.tsx` - Content sources management page for adding/editing/removing content sources with UI for various source types.
 - `components/ui/button.tsx` - shadcn/ui Button component.
 - `components/ui/input.tsx` - shadcn/ui Input component.
+- `app/api/content-sources/instagram/callback/route.ts` - Handles Instagram OAuth callback and token storage.
 
 ### Notes
 
@@ -90,7 +91,7 @@
   - [x] 2.2 Implement search and selection of predefined categories/topics
   - [x] 2.3 Implement input for usernames/channels and RSS/newsletter URLs
   - [x] 2.4 Integrate with YouTube, Instagram, X/Twitter, RSS, Substack APIs
-  - [ ] 2.5 Implement social account connection/import
+  - [ ] 2.5 Implement social account connection/import (IN PROGRESS)
   - [ ] 2.6 Implement priority settings for topics (High/Medium/Low)
   - [ ] 2.7 Implement validation and testing of content sources
   - [ ] 2.8 Add content source management tests
@@ -135,3 +136,8 @@
   - [ ] 7.4 Ensure GDPR and privacy compliance
   - [ ] 7.5 Implement logging and monitoring
   - [ ] 7.6 Add infrastructure and compliance tests 
+
+
+
+
+  
